@@ -1,0 +1,12 @@
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+.DS_Store
+
+# Generated decks stay on the machine; the sample deck is kept as a reference.
+data/decks/*
+!data/decks/sample-fossefall.json

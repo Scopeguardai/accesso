@@ -1,0 +1,235 @@
+{
+  "id": "sample-fossefall",
+  "brand": "fossefall",
+  "client": "fossefall",
+  "title": "Fossefall: from infrastructure builder to compute platform",
+  "palette": "fjord",
+  "status": "ready",
+  "statusNote": "Hand-written sample deck. It uses only what is in the knowledge base, so it carries no figures yet.",
+  "brief": {
+    "topic": "Introducing Fossefall and its platform strategy",
+    "audience": "People meeting Fossefall for the first time",
+    "goal": "Understand what Fossefall is building and where it is heading",
+    "slideCount": 10,
+    "tone": "",
+    "mustInclude": ""
+  },
+  "outline": [
+    {
+      "title": "Cover",
+      "purpose": "Open with the brand and its tagline",
+      "layout": "cover"
+    },
+    {
+      "title": "Contents",
+      "purpose": "Show the three parts of the story",
+      "layout": "agenda"
+    },
+    {
+      "title": "Introduction",
+      "purpose": "Open the first part",
+      "layout": "section"
+    },
+    {
+      "title": "Positioning",
+      "purpose": "State what Fossefall is building",
+      "layout": "statement"
+    },
+    {
+      "title": "What the name stands for",
+      "purpose": "Connect the waterfall to the company",
+      "layout": "split"
+    },
+    {
+      "title": "Strategy",
+      "purpose": "Pause before the strategy",
+      "layout": "photo"
+    },
+    {
+      "title": "More than sites",
+      "purpose": "Explain that every SPV adds to one base",
+      "layout": "gallery"
+    },
+    {
+      "title": "The path",
+      "purpose": "Show the move from builder to platform",
+      "layout": "timeline"
+    },
+    {
+      "title": "What scale unlocks",
+      "purpose": "Name the three outcomes of platform scale",
+      "layout": "list"
+    },
+    {
+      "title": "Close",
+      "purpose": "Sign off with the website",
+      "layout": "closing"
+    }
+  ],
+  "slides": [
+    {
+      "id": "cover",
+      "layout": "cover"
+    },
+    {
+      "id": "contents",
+      "layout": "agenda",
+      "title": "Content",
+      "items": [
+        {
+          "title": "Introduction",
+          "note": "Who we are"
+        },
+        {
+          "title": "Strategy",
+          "note": "From builder to platform"
+        },
+        {
+          "title": "What scale unlocks",
+          "note": "Three outcomes"
+        }
+      ],
+      "image": {
+        "asset": "aerial-shoreline"
+      }
+    },
+    {
+      "id": "introduction",
+      "sources": [
+        "fossefall/brand-identity.md"
+      ],
+      "layout": "section",
+      "title": "Introduction.",
+      "body": "Power, flow and renewal: an identity drawn from falling water.",
+      "image": {
+        "asset": "pine-shore"
+      }
+    },
+    {
+      "id": "positioning",
+      "label": "Positioning",
+      "sources": [
+        "fossefall/positioning.md",
+        "fossefall/brand-identity.md"
+      ],
+      "layout": "statement",
+      "heading": "Building Europe's first bankable AI infrastructure platform",
+      "body": "Pure AI power, shaped by clarity, sustainability and control."
+    },
+    {
+      "id": "the-name",
+      "label": "The name",
+      "sources": [
+        "fossefall/brand-identity.md"
+      ],
+      "layout": "split",
+      "heading": "Energy converging into intelligence",
+      "body": "Fossefall takes its identity from the waterfall. The vertical drop stands for gravity and continuous motion; the interlocking S in the logo for waterfalls and data streams meeting.",
+      "image": {
+        "asset": "waterfall"
+      },
+      "imageSide": "right"
+    },
+    {
+      "id": "strategy",
+      "sources": [
+        "fossefall/platform-strategy.md"
+      ],
+      "layout": "photo",
+      "kicker": "Strategy",
+      "title": "From infrastructure builder to full-stack compute platform",
+      "image": {
+        "asset": "fjord-mist"
+      }
+    },
+    {
+      "id": "more-than-sites",
+      "sources": [
+        "fossefall/platform-strategy.md"
+      ],
+      "layout": "gallery",
+      "heading": "More than data centre sites",
+      "body": "Every SPV Fossefall develops contributes to one consolidated infrastructure base: the foundation of a full-stack AI compute platform.",
+      "images": [
+        {
+          "asset": "misty-mountain"
+        },
+        {
+          "asset": "lichen"
+        }
+      ]
+    },
+    {
+      "id": "the-path",
+      "sources": [
+        "fossefall/platform-strategy.md"
+      ],
+      "layout": "timeline",
+      "heading": "Each site moves the platform closer",
+      "steps": [
+        {
+          "label": "Build",
+          "title": "Develop sites",
+          "body": "Each site is developed through its own SPV."
+        },
+        {
+          "label": "Consolidate",
+          "title": "One infrastructure base",
+          "body": "Every SPV adds to a consolidated, valuable base."
+        },
+        {
+          "label": "Scale",
+          "title": "Platform-level scale",
+          "body": "Unlocked once critical mass is reached."
+        }
+      ]
+    },
+    {
+      "id": "what-scale-unlocks",
+      "sources": [
+        "fossefall/platform-strategy.md"
+      ],
+      "layout": "list",
+      "heading": "What platform scale unlocks",
+      "items": [
+        {
+          "title": "GPU capacity",
+          "body": "Monetising GPU capacity across the consolidated base."
+        },
+        {
+          "title": "End-user margins",
+          "body": "Capturing end-user margins."
+        },
+        {
+          "title": "Valuation",
+          "body": "Securing tech-style valuations."
+        }
+      ]
+    },
+    {
+      "id": "close",
+      "layout": "closing",
+      "title": "Thank you",
+      "contacts": [
+        {
+          "label": "Web",
+          "value": "www.fossefall.ai"
+        }
+      ]
+    }
+  ],
+  "suggestions": [
+    {
+      "kind": "content",
+      "text": "Every knowledge-base entry is still marked draft; ask Fossefall to confirm the positioning and strategy wording."
+    },
+    {
+      "kind": "content",
+      "slideId": "the-path",
+      "text": "Add real milestones (sites, capacity, dates) to the knowledge base so this slide can show a dated timeline."
+    }
+  ],
+  "activity": [],
+  "createdAt": "2026-11-23T19:00:00.000Z",
+  "updatedAt": "2026-11-23T19:00:00.000Z"
+}

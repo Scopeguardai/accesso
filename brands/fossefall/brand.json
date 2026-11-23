@@ -1,0 +1,147 @@
+{
+  "id": "fossefall",
+  "name": "Fossefall",
+  "tagline": "pure AI power",
+  "website": "www.fossefall.ai",
+  "copyright": "© 2025",
+  "assetBase": "/brands/fossefall",
+  "fonts": {
+    "sans": { "family": "Inter", "file": "fonts/Inter-Variable.ttf", "weight": "100 900" },
+    "mono": { "family": "Space Mono", "file": "fonts/SpaceMono-Regular.ttf", "weight": "400" }
+  },
+  "logo": {
+    "wordmark": "logo/wordmark.svg",
+    "mark": "logo/mark.svg"
+  },
+  "defaultPalette": "fjord",
+  "palettes": {
+    "fjord": {
+      "label": "Fjord (presentation template)",
+      "source": "Fossefall_template.pdf",
+      "dark": "#062C3D",
+      "onDark": "#FFFFFF",
+      "accent": "#DCC979",
+      "onAccent": "#062C3D",
+      "light": "#F5F5F5",
+      "paper": "#FFFFFF",
+      "tint": "#F1F1EE",
+      "ink": "#111111",
+      "muted": "#5E6468",
+      "line": "#D9D9D9"
+    },
+    "forest": {
+      "label": "Deep forest (primary colours)",
+      "source": "Brand guideline p.9, sampled from the drawn swatches",
+      "dark": "#17241A",
+      "onDark": "#FFFFFF",
+      "accent": "#D5F57A",
+      "onAccent": "#17241A",
+      "light": "#F1F1EE",
+      "paper": "#FFFFFF",
+      "tint": "#FEFAE8",
+      "ink": "#241F21",
+      "muted": "#5F665F",
+      "line": "#D8DAD3"
+    },
+    "winter": {
+      "label": "Winter",
+      "source": "Brand guideline p.10",
+      "dark": "#151621",
+      "onDark": "#E7DFCB",
+      "accent": "#8ED1F0",
+      "onAccent": "#151621",
+      "light": "#F4F1E8",
+      "paper": "#FFFFFF",
+      "tint": "#E7DFCB",
+      "ink": "#151621",
+      "muted": "#5C5F6E",
+      "line": "#D9D4C6"
+    },
+    "spring": {
+      "label": "Spring",
+      "source": "Brand guideline p.11",
+      "dark": "#121B13",
+      "onDark": "#FFFFFF",
+      "accent": "#7DD3F7",
+      "onAccent": "#121B13",
+      "light": "#F8F7E3",
+      "paper": "#FFFFFF",
+      "tint": "#F3F1C9",
+      "ink": "#121B13",
+      "muted": "#5A6259",
+      "line": "#DDDCC0"
+    },
+    "summer": {
+      "label": "Summer",
+      "source": "Brand guideline p.12",
+      "dark": "#4A3815",
+      "onDark": "#FFFFFF",
+      "accent": "#9CC84A",
+      "onAccent": "#241F21",
+      "light": "#FBF6E4",
+      "paper": "#FFFFFF",
+      "tint": "#F8DC60",
+      "ink": "#241F21",
+      "muted": "#6B6250",
+      "line": "#E3DAC0"
+    },
+    "autumn": {
+      "label": "Autumn",
+      "source": "Brand guideline p.13",
+      "dark": "#211716",
+      "onDark": "#E8DFC9",
+      "accent": "#D67742",
+      "onAccent": "#211716",
+      "light": "#F4EFE3",
+      "paper": "#FFFFFF",
+      "tint": "#E8DFC9",
+      "ink": "#211716",
+      "muted": "#6A5E58",
+      "line": "#DDD3BF"
+    }
+  },
+  "images": [
+    {
+      "id": "pine-shore",
+      "file": "images/pine-shore.jpg",
+      "orientation": "landscape",
+      "alt": "A walker and a dog seen from behind between tall pine trunks at a lake shore",
+      "use": "Human scale, calm, long-term thinking. Good for introductions, people and values slides."
+    },
+    {
+      "id": "waterfall",
+      "file": "images/waterfall.jpg",
+      "orientation": "portrait",
+      "alt": "A tall waterfall dropping down a dark rock face with a hiker standing beside it",
+      "use": "The brand's defining image: the vertical drop, power, flow. Good for energy, power and scale slides. Portrait: use in split layouts, not full-bleed."
+    },
+    {
+      "id": "lichen",
+      "file": "images/lichen.jpg",
+      "orientation": "landscape",
+      "alt": "Close-up of pale reindeer lichen",
+      "use": "Texture and detail. Good as a quiet supporting image for sustainability or precision topics."
+    },
+    {
+      "id": "aerial-shoreline",
+      "file": "images/aerial-shoreline.jpg",
+      "orientation": "landscape",
+      "alt": "Aerial view of pine forest meeting a sandy shoreline and shallow water",
+      "use": "Overview and structure. Used behind the contents slide in the template. Low resolution: keep it under a dark overlay or at half width."
+    },
+    {
+      "id": "misty-mountain",
+      "file": "images/misty-mountain.jpg",
+      "orientation": "portrait",
+      "alt": "Mist drifting across a granite mountainside above autumn forest",
+      "use": "Atmosphere, scale, the Norwegian landscape. Portrait: use in split or gallery layouts."
+    },
+    {
+      "id": "fjord-mist",
+      "file": "images/fjord-mist.jpg",
+      "orientation": "landscape",
+      "alt": "Low cloud over a still fjord between forested hills",
+      "use": "Wide hero image. Good for full-bleed photo title slides."
+    }
+  ]
+}

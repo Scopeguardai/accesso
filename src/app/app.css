@@ -1,0 +1,329 @@
+/* Styles for the Accesso tool itself (not the decks; those are in components/deck.css). */
+
+.app {
+  --ink: #16191c;
+  --mut: #636b72;
+  --line: #dfe2e4;
+  --bg: #f6f6f4;
+  --card: #fff;
+  --accent: #16191c;
+  --ok: #1d6b45;
+  --warn: #9a5a00;
+  --bad: #a3271f;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.app * {
+  box-sizing: border-box;
+}
+
+.app a {
+  color: inherit;
+}
+
+.app h1,
+.app h2,
+.app h3,
+.app p {
+  margin: 0;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+
+.app-name {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.app-header .spacer {
+  flex: 1;
+}
+
+.home {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 3rem;
+}
+
+.home h1 {
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.home .intro {
+  color: var(--mut);
+  margin: 0.5rem 0 1.75rem;
+  max-width: 34rem;
+}
+
+.home h2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+  margin-bottom: 0.75rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-weight: 550;
+  font-size: 0.875rem;
+}
+
+.field .hint {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.app input,
+.app select,
+.app textarea {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+}
+
+.app textarea {
+  resize: vertical;
+  min-height: 5.5rem;
+}
+
+.app input:focus-visible,
+.app select:focus-visible,
+.app textarea:focus-visible,
+.app button:focus-visible,
+.app a:focus-visible {
+  outline: 2px solid #2f6fed;
+  outline-offset: 2px;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+  font-weight: 500;
+}
+
+.btn.small {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8125rem;
+}
+
+.error {
+  color: var(--bad);
+  font-size: 0.875rem;
+}
+
+.decklist {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.decklist a {
+  display: block;
+  padding: 0.8rem 0.9rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.decklist a:hover {
+  border-color: #b9bec2;
+}
+
+.decklist .meta {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 99px;
+  border: 1px solid currentColor;
+}
+
+.chip.ready {
+  color: var(--ok);
+}
+
+.chip.generating {
+  color: var(--warn);
+}
+
+.chip.error {
+  color: var(--bad);
+}
+
+/* studio */
+
+.studio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 23rem;
+  height: calc(100dvh - 3.3rem);
+}
+
+.studio-preview {
+  background: #2a2d30;
+  min-height: 0;
+  display: grid;
+}
+
+.studio-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.panel {
+  border-left: 1px solid var(--line);
+  background: var(--card);
+  overflow-y: auto;
+  padding: 1.1rem;
+  display: grid;
+  gap: 1.4rem;
+  align-content: start;
+}
+
+.panel h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+  margin-bottom: 0.5rem;
+}
+
+.panel .note {
+  font-size: 0.875rem;
+  color: var(--mut);
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8125rem;
+  color: var(--mut);
+  margin: 0.5rem 0;
+}
+
+.target input {
+  width: auto;
+}
+
+.suggestions,
+.activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.suggestions li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.875rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.suggestions .kind {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+}
+
+.activity li {
+  font-size: 0.8125rem;
+  color: var(--mut);
+  border-left: 2px solid var(--line);
+  padding-left: 0.6rem;
+}
+
+@media (max-width: 860px) {
+  .home {
+    grid-template-columns: 1fr;
+    gap: 2.25rem;
+    padding-top: 1.75rem;
+  }
+  .row2 {
+    grid-template-columns: 1fr;
+  }
+  .studio {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .studio-preview {
+    height: 62dvh;
+  }
+  .panel {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
