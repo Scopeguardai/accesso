@@ -1,0 +1,17 @@
+{
+  // Codespaces setup: installs packages once, then starts the app every time the
+  // codespace opens, keeping it up to date with GitHub (see scripts/dev-sync.mjs).
+  "name": "Accesso",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "postCreateCommand": "npm install --no-audit --no-fund",
+  "postAttachCommand": "npm run dev:sync",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Accesso", "onAutoForward": "openBrowser" }
+  },
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key used by the presentation agent."
+    }
+  }
+}

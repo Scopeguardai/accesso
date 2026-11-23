@@ -52,6 +52,18 @@ a deck will report in the conversation that the key is missing.
 In a GitHub Codespace, add the key as a Codespaces secret named `ANTHROPIC_API_KEY`
 instead of using `.env.local`.
 
+### Staying up to date
+
+`npm run dev:sync` runs the app and checks GitHub every 30 seconds for a newer version,
+applying it automatically. Code changes appear on reload; if new packages are needed it
+installs them and restarts. If a file edited locally clashes with an update, it leaves
+your files alone and says so.
+
+In a Codespace this starts by itself: opening the codespace installs packages, starts
+the app in sync mode and opens it in the browser (see `.devcontainer/devcontainer.json`).
+A codespace created before that file existed picks it up after
+**Codespaces: Rebuild Container** from the command palette (Cmd/Ctrl+Shift+P).
+
 ```bash
 npm test          # checks the brand pack, sample deck, knowledge search and agent tools
 npm run typecheck
