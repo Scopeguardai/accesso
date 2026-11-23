@@ -2,6 +2,10 @@
 
 Plain Markdown the deck agent searches before it writes a slide. Text only.
 
+You can manage entries in the app (the **Knowledge base** button in the left column) or
+edit these files directly; both work on the same files. Entries added in the app are
+saved here, so commit them to keep them.
+
 ## Layout
 
 ```

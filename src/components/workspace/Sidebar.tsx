@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ago } from '@/lib/deck/describe';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { BrandOption } from '@/lib/workspace';
-import { IconClose, IconPlus } from './icons';
+import { IconBook, IconClose, IconPlus } from './icons';
 
 const STATUS_LABEL: Record<DeckSummary['status'], string> = {
   generating: 'Agent working',
@@ -37,6 +37,8 @@ export default function Sidebar({
   onBrand,
   decks,
   activeId,
+  section,
+  knowledgeCount,
   onClose,
 }: {
   brands: BrandOption[];
@@ -44,6 +46,8 @@ export default function Sidebar({
   onBrand: (id: string) => void;
   decks: DeckSummary[];
   activeId: string | null;
+  section: 'new' | 'deck' | 'knowledge';
+  knowledgeCount: number;
   onClose: () => void;
 }) {
   const brand = brands.find((b) => b.id === brandId);
@@ -58,9 +62,21 @@ export default function Sidebar({
         </button>
       </div>
 
-      <Link href="/" className={`sb-new${activeId === null ? ' is-active' : ''}`}>
+      <Link href="/" className={`sb-new${section === 'new' ? ' is-active' : ''}`}>
         <IconPlus />
         New presentation
+      </Link>
+
+      <Link
+        href="/knowledge"
+        className={`sb-nav${section === 'knowledge' ? ' is-active' : ''}`}
+        aria-current={section === 'knowledge' ? 'page' : undefined}
+      >
+        <IconBook />
+        <span>Knowledge base</span>
+        <span className="sb-count" aria-label={`${knowledgeCount} entries`}>
+          {knowledgeCount}
+        </span>
       </Link>
 
       <nav className="sb-list">
@@ -98,7 +114,7 @@ export default function Sidebar({
         {brands.length > 1 ? (
           <label className="sb-brand">
             <span>Brand</span>
-            <select value={brandId} onChange={(e) => onBrand(e.target.value)} disabled={activeId !== null}>
+            <select value={brandId} onChange={(e) => onBrand(e.target.value)} disabled={section === 'deck'}>
               {brands.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -113,11 +129,6 @@ export default function Sidebar({
               <strong>{brand.name}</strong>
             </p>
           )
-        )}
-        {brand && (
-          <p className="sb-kb">
-            {brand.knowledge.length === 1 ? '1 knowledge file' : `${brand.knowledge.length} knowledge files`}
-          </p>
         )}
       </div>
     </aside>

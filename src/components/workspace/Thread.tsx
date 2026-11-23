@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { ago } from '@/lib/deck/describe';
 import type { AgentEntry, Brief, Deck, Step, Suggestion, ThreadEntry } from '@/lib/deck/schema';
@@ -85,8 +86,16 @@ function Steps({
                   <button type="button" className="link" onClick={() => onGoto(s.ref!)}>
                     {s.text}
                   </button>
+                ) : s.kind === 'read' && s.ref ? (
+                  <Link
+                    href={`/knowledge?entry=${encodeURIComponent(s.ref)}`}
+                    className="link"
+                    title="Open in the knowledge base"
+                  >
+                    {s.text}
+                  </Link>
                 ) : (
-                  <span title={s.kind === 'read' ? s.ref : undefined}>{s.text}</span>
+                  <span>{s.text}</span>
                 )}
               </li>
             );

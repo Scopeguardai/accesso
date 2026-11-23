@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { KNOWLEDGE_DIR, safeId } from '../paths';
+import { firstParagraph, parseEntry, type KnowledgeSummary } from './format';
 
 /**
  * The knowledge base is plain Markdown under knowledge/<client>/.
@@ -24,30 +25,11 @@ export type KnowledgeEntry = {
 export type KnowledgeHit = Omit<KnowledgeEntry, 'body'> & { score: number; snippet: string };
 
 function parse(relPath: string, raw: string): KnowledgeEntry {
-  const meta: Record<string, string> = {};
-  let body = raw;
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(raw);
-  if (match) {
-    body = raw.slice(match[0].length);
-    for (const line of match[1].split(/\r?\n/)) {
-      const m = /^([A-Za-z_]+):\s*(.*)$/.exec(line);
-      if (m) meta[m[1].toLowerCase()] = m[2].trim().replace(/^["']|["']$/g, '');
-    }
-  }
-  const tags = (meta.tags ?? '')
-    .replace(/^\[|\]$/g, '')
-    .split(',')
-    .map((t) => t.trim().toLowerCase())
-    .filter(Boolean);
-  return {
-    path: relPath,
-    title: meta.title ?? path.basename(relPath, '.md'),
-    tags,
-    source: meta.source ?? '',
-    updated: meta.updated ?? '',
-    status: meta.status ?? '',
-    body: body.trim(),
-  };
+  return { path: relPath, ...parseEntry(raw, path.basename(relPath, '.md')) };
+}
+
+export function summarizeEntry({ body, ...rest }: KnowledgeEntry): KnowledgeSummary {
+  return { ...rest, snippet: firstParagraph(body) };
 }
 
 export function listKnowledge(client: string): KnowledgeEntry[] {

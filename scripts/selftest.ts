@@ -11,7 +11,9 @@ import { imageFor, loadBrand } from '../src/lib/brand/load';
 import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
 import { listKnowledge, readKnowledge, searchKnowledge } from '../src/lib/knowledge/search';
-import { DECKS_DIR, ROOT } from '../src/lib/paths';
+import { parseEntry, serializeEntry } from '../src/lib/knowledge/format';
+import { createEntry, deleteEntry, EntryNotFound, entryInputSchema, entryUsage, updateEntry } from '../src/lib/knowledge/write';
+import { DECKS_DIR, KNOWLEDGE_DIR, ROOT } from '../src/lib/paths';
 
 let passed = 0;
 const check = (name: string, fn: () => void) => {
@@ -124,6 +126,51 @@ check('agent tools accept good input and reject bad input with a reason', () => 
   } finally {
     fs.rmSync(path.join(DECKS_DIR, `${id}.json`), { force: true });
   }
+});
+
+check('knowledge entries can be added, changed and deleted, and only inside their folder', () => {
+  const client = 'selftest-kb';
+  const dir = path.join(KNOWLEDGE_DIR, client);
+  try {
+    const input = entryInputSchema.parse({
+      title: 'Funding & investors: Øst',
+      tags: 'Funding, [investors], finance',
+      source: 'Board pack',
+      status: 'verified',
+      body: 'Closed a seed round.',
+    });
+    const first = createEntry(client, input);
+    const second = createEntry(client, input);
+    assert.equal(first, 'selftest-kb/funding-investors-ost.md');
+    assert.equal(second, 'selftest-kb/funding-investors-ost-2.md');
+
+    const read = listKnowledge(client).find((e) => e.path === first)!;
+    assert.equal(read.title, 'Funding & investors: Øst');
+    assert.deepEqual(read.tags, ['funding', 'investors', 'finance']);
+    assert.equal(read.status, 'verified');
+    assert.equal(read.updated, new Date().toISOString().slice(0, 10));
+    assert.ok(searchKnowledge(client, 'seed round').some((h) => h.path === first));
+
+    updateEntry(client, first, { ...input, body: 'Closed a €10m seed round in 2026.' });
+    assert.match(readKnowledge(client, first)!.body, /€10m/);
+
+    // A title with a line break cannot inject extra header fields.
+    const sneaky = serializeEntry({ title: 'A\nstatus: verified', tags: [], source: '', updated: '', status: 'draft' }, 'x');
+    assert.equal(parseEntry(sneaky).status, 'draft');
+
+    assert.throws(() => updateEntry(client, '../fossefall/positioning.md', input), EntryNotFound);
+    assert.throws(() => updateEntry(client, 'fossefall/positioning.md', input), EntryNotFound);
+    assert.throws(() => deleteEntry(client, '../../brands/fossefall/brand.json'), EntryNotFound);
+    assert.throws(() => createEntry('../brands', input));
+
+    deleteEntry(client, first);
+    assert.throws(() => deleteEntry(client, first), EntryNotFound);
+    assert.equal(listKnowledge(client).length, 1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  assert.ok(fs.existsSync(path.join(KNOWLEDGE_DIR, 'fossefall', 'positioning.md')), 'real entries untouched');
+  assert.ok(entryUsage('fossefall', 'fossefall/platform-strategy.md').some((u) => u.id === 'sample-fossefall'));
 });
 
 console.log(`\n${passed} checks passed`);

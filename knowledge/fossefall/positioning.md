@@ -8,5 +8,4 @@ status: draft
 
 Fossefall describes itself as building Europe's first bankable AI infrastructure platform.
 
-Note for reviewers: the paragraph and figures under this headline in the template
-("+95%", "7K reviews") are placeholder text and are not recorded here.
+Note for reviewers: the paragraph and figures under this headline in the template ("+95%", "7K reviews") are placeholder text and are not recorded here.

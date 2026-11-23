@@ -23,6 +23,12 @@ The app is one screen in three columns, like a chat app:
   desktop or a phone would see it, with a clickable list of slides, a link to copy and
   an Open button. On a phone, Chat and Preview are tabs.
 
+- **Knowledge base.** The button under "New presentation" opens what the agent knows
+  about the brand: search it the way the agent does, read and edit entries, mark them
+  draft or verified, add new ones by typing or uploading a `.md` or `.txt` file, and see
+  which presentations cite each entry. Sources the agent read in a conversation link
+  straight to their entry.
+
 Each deck also has its own page at `/d/<id>`: it pages through slides on a wide screen
 and reflows each slide into a single column on a phone.
 

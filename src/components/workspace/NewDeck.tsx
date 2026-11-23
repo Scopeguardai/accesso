@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import type { Brief } from '@/lib/deck/schema';
 import type { BrandOption } from '@/lib/workspace';
@@ -176,7 +177,12 @@ export default function NewDeck({
               </li>
             ))}
           </ul>
-          <p className="kb-note">Add or edit files in the knowledge/{brand.id} folder of the project.</p>
+          <p className="kb-note">
+            <Link href="/knowledge" className="link">
+              Open the knowledge base
+            </Link>{' '}
+            to add or check what the agent can use.
+          </p>
         </details>
       </div>
     </div>

@@ -10,5 +10,4 @@ status: draft
 
 The company's website is fossefall.ai.
 
-Note for reviewers: personal phone numbers and email addresses are deliberately not kept
-in the knowledge base. Add a shared contact address here if decks should carry one.
+Note for reviewers: personal phone numbers and email addresses are deliberately not kept in the knowledge base. Add a shared contact address here if decks should carry one.
