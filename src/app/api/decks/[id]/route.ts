@@ -1,25 +1,42 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { isRunning } from '@/lib/agent/run';
-import { readDeck, updateDeck } from '@/lib/deck/store';
+import { loadBrand } from '@/lib/brand/load';
+import { readDeck, settleInterrupted, updateDeck } from '@/lib/deck/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type Ctx = { params: Promise<{ id: string }> };
 
+const find = (id: string) => (/^[a-z0-9][a-z0-9-]{0,39}$/.test(id) ? readDeck(id) : null);
+
 export async function GET(_request: Request, { params }: Ctx) {
   const { id } = await params;
-  if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  let deck = readDeck(id);
+  const deck = find(id);
   if (!deck) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json(settleInterrupted(deck, isRunning(id)));
+}
 
-  // A run that died with the server leaves the deck marked as generating.
-  const stale = Date.now() - Date.parse(deck.updatedAt) > 90_000;
-  if (deck.status === 'generating' && !isRunning(id) && stale) {
-    deck = updateDeck(id, (d) => {
-      d.status = d.slides.length > 0 ? 'ready' : 'error';
-      d.statusNote = 'The last run was interrupted before it finished.';
-    });
+const patchSchema = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  palette: z.string().optional(),
+});
+
+/** Direct changes that need no agent: rename the deck, switch its palette. */
+export async function PATCH(request: Request, { params }: Ctx) {
+  const { id } = await params;
+  const deck = find(id);
+  if (!deck) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
+  const { title, palette } = parsed.data;
+  if (palette && !loadBrand(deck.brand).palettes[palette]) {
+    return NextResponse.json({ error: `Unknown palette "${palette}".` }, { status: 400 });
   }
-  return NextResponse.json(deck);
+  const next = updateDeck(id, (d) => {
+    if (title) d.title = title;
+    if (palette) d.palette = palette;
+  });
+  return NextResponse.json(next);
 }

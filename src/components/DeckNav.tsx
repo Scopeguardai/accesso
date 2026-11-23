@@ -48,9 +48,18 @@ export default function DeckNav({ count }: { count: number }) {
     };
     window.addEventListener('keydown', onKey);
 
+    // The studio asks the preview to show a particular slide.
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.data?.type !== 'accesso:goto') return;
+      const at = slides.findIndex((s) => s.id === e.data.id);
+      if (at >= 0) slides[at].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    window.addEventListener('message', onMessage);
+
     return () => {
       observer.disconnect();
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('message', onMessage);
     };
   }, [count]);
 

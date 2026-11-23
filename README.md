@@ -7,18 +7,24 @@ First brand: **Fossefall**.
 
 ## What works today
 
-- **Brief in, deck out.** A form takes the topic, audience, goal, length and points to
-  include. The agent searches the knowledge base, writes an outline, designs the slides
-  and records suggestions.
-- **A URL per deck.** `/d/<id>` pages through slides on a wide screen and reflows each
-  slide into a single column on a phone.
-- **Edits by prompt.** In the studio (`/studio/<id>`), describe a content or design
-  change for the whole deck or only the slide in view. Suggestions from the agent can be
-  applied with one click.
-- **Brand pack.** Fonts, logo, palettes, image library and written brand rules for
-  Fossefall, taken from the supplied guideline and template.
-- **Knowledge base.** Markdown files per client, with search and per-slide source
-  tracking.
+The app is one screen in three columns, like a chat app:
+
+- **Projects (left).** Every presentation, grouped by when it was last worked on, with a
+  dot showing whether it is ready, being worked on or needs attention. On narrower
+  screens this becomes a drawer behind the menu button.
+- **Conversation (middle).** Start a deck by describing it in your own words, with
+  parameters for slide count, palette, audience, goal and tone, or begin from one of the
+  brand's example briefs. The agent's replies show the steps it took (searches, sources
+  read, slides written) and end with suggestions you can apply with one click. Ask for
+  further changes in the message box, for the whole deck or only the slide in view.
+  The palette switches immediately, without waiting for the agent, and the deck title
+  can be renamed in place.
+- **Presentation (right).** The live deck, updated as the agent works, shown as a
+  desktop or a phone would see it, with a clickable list of slides, a link to copy and
+  an Open button. On a phone, Chat and Preview are tabs.
+
+Each deck also has its own page at `/d/<id>`: it pages through slides on a wide screen
+and reflows each slide into a single column on a phone.
 
 Not built yet: editing text directly on the slide, asset upload, asset search and image
 generation, user accounts, and hosting.
@@ -34,8 +40,11 @@ npm run dev                    # http://localhost:3000
 ```
 
 Without an API key you can still open the sample deck at
-`/d/sample-fossefall` and the studio at `/studio/sample-fossefall`; creating or editing
-a deck will report that the key is missing.
+`/studio/sample-fossefall` (or on its own at `/d/sample-fossefall`); creating or editing
+a deck will report in the conversation that the key is missing.
+
+In a GitHub Codespace, add the key as a Codespaces secret named `ANTHROPIC_API_KEY`
+instead of using `.env.local`.
 
 ```bash
 npm test          # checks the brand pack, sample deck, knowledge search and agent tools
@@ -50,10 +59,11 @@ brands/<brand>/        brand.json (fonts, palettes, images) and BRAND.md (rules 
 public/brands/<brand>/ the font, logo and image files themselves
 knowledge/<client>/    Markdown the agent may cite; see knowledge/README.md
 plugin/skills/         content-flow, deck-design, deck-review: how the agent works
-data/decks/            one JSON file per deck
+data/decks/            one JSON file per deck, including its conversation
 src/lib/deck/          the deck format (schema.ts) and file store
 src/lib/agent/         the agent: its tools, prompts and the Claude Agent SDK run loop
-src/components/        the renderer (DeckView.tsx, deck.css) and the app screens
+src/components/        the deck renderer (DeckView.tsx, deck.css)
+src/components/workspace/  the three-column app screen
 src/app/               pages and API routes
 ```
 

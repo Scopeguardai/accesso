@@ -1,27 +1,25 @@
-import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Studio from '@/components/Studio';
-import { readDeck } from '@/lib/deck/store';
-import '../../app.css';
+import Workspace from '@/components/workspace/Workspace';
+import { isRunning } from '@/lib/agent/run';
+import { listDecks, readDeck, settleInterrupted, summarize } from '@/lib/deck/store';
+import { brandOptions } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
 
-export default async function StudioPage({ params }: { params: Promise<{ id: string }> }) {
+type Props = { params: Promise<{ id: string }> };
+
+const find = (id: string) => (/^[a-z0-9][a-z0-9-]{0,39}$/.test(id) ? readDeck(id) : null);
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const deck = find((await params).id);
+  return { title: deck ? `${deck.title} · Accesso` : 'Accesso' };
+}
+
+export default async function StudioPage({ params }: Props) {
   const { id } = await params;
-  const deck = /^[a-z0-9][a-z0-9-]{0,39}$/.test(id) ? readDeck(id) : null;
-  if (!deck) notFound();
-  return (
-    <div className="app">
-      <header className="app-header">
-        <Link href="/" className="app-name">
-          Accesso
-        </Link>
-        <span className="spacer" />
-        <a className="btn ghost small" href={`/d/${deck.id}`} target="_blank" rel="noreferrer">
-          Open presentation
-        </a>
-      </header>
-      <Studio initial={deck} />
-    </div>
-  );
+  const found = find(id);
+  if (!found) notFound();
+  const deck = settleInterrupted(found, isRunning(id));
+  return <Workspace key={id} brands={brandOptions()} decks={listDecks().map(summarize)} deck={deck} />;
 }

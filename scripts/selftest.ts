@@ -8,7 +8,7 @@ import path from 'node:path';
 import { createDeckTools } from '../src/lib/agent/deck-tools';
 import { systemPrompt } from '../src/lib/agent/prompt';
 import { imageFor, loadBrand } from '../src/lib/brand/load';
-import { LAYOUTS } from '../src/lib/deck/schema';
+import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
 import { listKnowledge, readKnowledge, searchKnowledge } from '../src/lib/knowledge/search';
 import { DECKS_DIR, ROOT } from '../src/lib/paths';
@@ -46,6 +46,12 @@ check('sample deck is valid and references only known images and sources', () =>
   }
 });
 
+check('briefs saved in the old shape are still readable', () => {
+  const old = briefSchema.parse({ topic: 'Old topic', mustInclude: 'Old point', slideCount: 5 });
+  assert.equal(old.prompt, 'Old topic\n\nOld point');
+  assert.equal(old.slideCount, 5);
+});
+
 check('knowledge search finds the right entry and stays inside the client folder', () => {
   assert.ok(listKnowledge('fossefall').length >= 4);
   assert.equal(searchKnowledge('fossefall', 'GPU capacity platform')[0].path, 'fossefall/platform-strategy.md');
@@ -67,8 +73,10 @@ check('agent tools accept good input and reject bad input with a reason', () => 
   const now = new Date().toISOString();
   writeDeck({
     id, brand: 'fossefall', client: 'fossefall', title: 'Self-test', palette: 'fjord', status: 'ready',
-    brief: { topic: 'Self-test', audience: '', goal: '', slideCount: 3, tone: '', mustInclude: '' },
-    outline: [], slides: [], suggestions: [], activity: [], createdAt: now, updatedAt: now,
+    brief: { prompt: 'Self-test', audience: '', goal: '', slideCount: 3, tone: '' },
+    outline: [], slides: [], suggestions: [],
+    thread: [{ id: 'a1', role: 'agent', at: now, status: 'working', text: '', steps: [] }],
+    createdAt: now, updatedAt: now,
   });
   try {
     const t = createDeckTools(id);
@@ -109,7 +117,10 @@ check('agent tools accept good input and reject bad input with a reason', () => 
     assert.equal(final.palette, 'forest');
     assert.equal(final.title, 'Renamed');
     assert.equal(final.suggestions.length, 1);
-    assert.ok(final.activity.length > 5);
+    const run = final.thread[0];
+    assert.ok(run.role === 'agent' && run.steps.length > 5, 'tool calls should be recorded as steps');
+    assert.ok(run.role === 'agent' && run.steps.some((st) => st.kind === 'read' && st.ref === 'fossefall/positioning.md'));
+    assert.ok(run.role === 'agent' && run.steps.some((st) => st.kind === 'note'), 'rejected slides should leave a note');
   } finally {
     fs.rmSync(path.join(DECKS_DIR, `${id}.json`), { force: true });
   }

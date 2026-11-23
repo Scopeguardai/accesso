@@ -4,10 +4,23 @@
   "tagline": "pure AI power",
   "website": "www.fossefall.ai",
   "copyright": "© 2025",
+  "starters": [
+    "Introduce Fossefall to infrastructure investors who are meeting us for the first time: who we are, what we are building and where the company is heading.",
+    "A short overview of the platform strategy for people joining the team, from infrastructure builder to full-stack compute platform.",
+    "A brand introduction for agencies and partners working with Fossefall: what the identity stands for and how to use it."
+  ],
   "assetBase": "/brands/fossefall",
   "fonts": {
-    "sans": { "family": "Inter", "file": "fonts/Inter-Variable.ttf", "weight": "100 900" },
-    "mono": { "family": "Space Mono", "file": "fonts/SpaceMono-Regular.ttf", "weight": "400" }
+    "sans": {
+      "family": "Inter",
+      "file": "fonts/Inter-Variable.ttf",
+      "weight": "100 900"
+    },
+    "mono": {
+      "family": "Space Mono",
+      "file": "fonts/SpaceMono-Regular.ttf",
+      "weight": "400"
+    }
   },
   "logo": {
     "wordmark": "logo/wordmark.svg",

@@ -1,5 +1,5 @@
 import { loadBrand } from '../brand/load';
-import { logActivity, readDeck, updateDeck } from '../deck/store';
+import { appendThread, finishRun, readDeck, updateDeck } from '../deck/store';
 import { ROOT } from '../paths';
 import { createDeckTools, TOOL_DESCRIPTIONS, toolShapes, type ToolReply } from './deck-tools';
 import { createPrompt, editPrompt, systemPrompt } from './prompt';
@@ -34,11 +34,11 @@ export async function runAgent(req: RunRequest): Promise<void> {
     d.status = 'generating';
     d.statusNote = undefined;
   });
-  logActivity(deckId, req.mode === 'create' ? 'Started: new deck' : `Started: "${req.request}"`);
+  appendThread(deckId, { role: 'agent', status: 'working', text: '', steps: [] });
 
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error('ANTHROPIC_API_KEY is not set. Add it to .env.local and restart the app.');
+      throw new Error('ANTHROPIC_API_KEY is not set. Add it to .env.local (or as a Codespaces secret) and restart the app.');
     }
     const brand = loadBrand(deck.brand);
     const tools = createDeckTools(deckId);
@@ -65,7 +65,7 @@ export async function runAgent(req: RunRequest): Promise<void> {
     });
 
     const run = sdk.query({
-      prompt: req.mode === 'create' ? createPrompt(deck) : editPrompt(req.request, req.slideId),
+      prompt: req.mode === 'create' ? createPrompt(deck) : editPrompt(deck, req.request, req.slideId),
       options: {
         systemPrompt: systemPrompt(brand),
         model: process.env.ACCESSO_MODEL || undefined,
@@ -89,19 +89,11 @@ export async function runAgent(req: RunRequest): Promise<void> {
       }
     }
 
-    updateDeck(deckId, (d) => {
-      d.status = 'ready';
-      d.statusNote = summary.slice(0, 600) || undefined;
-    });
-    logActivity(deckId, 'Finished');
+    finishRun(deckId, 'done', summary || 'Done.', 'ready');
   } catch (err) {
-    const note = (err as Error).message;
-    updateDeck(deckId, (d) => {
-      // A failed edit leaves a usable deck behind; a failed first run does not.
-      d.status = d.slides.length > 0 && req.mode === 'edit' ? 'ready' : 'error';
-      d.statusNote = `Run failed: ${note}`;
-    });
-    logActivity(deckId, `Failed: ${note}`);
+    const after = readDeck(deckId);
+    // A failed run that still left slides behind leaves a usable deck.
+    finishRun(deckId, 'error', (err as Error).message, after && after.slides.length > 0 ? 'ready' : 'error');
   } finally {
     running.delete(deckId);
   }

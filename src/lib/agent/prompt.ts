@@ -62,30 +62,41 @@ ${skill('deck-review')}
 
 export function createPrompt(deck: Deck): string {
   const b = deck.brief;
-  return `Create a new presentation.
+  return `Create a new presentation from this brief.
 
 <brief>
-Topic: ${b.topic}
+${b.prompt}
+</brief>
+
+<parameters>
 Audience: ${b.audience || 'not stated'}
 Goal: ${b.goal || 'not stated'}
 Length: ${b.slideCount} slides, including cover and closing
 Tone: ${b.tone || 'the brand voice'}
 Palette: ${b.palette || 'your choice, following the brand guide'}
-Must include:
-${b.mustInclude || 'nothing specified'}
-</brief>
+</parameters>
 
 Work in this order:
 1. Follow the content-flow skill: search the knowledge base, then save the outline with set_outline.
-2. Give the deck a title with set_deck (and a palette, if you are not using the default).
+2. Give the deck a short title with set_deck (and a palette, if you are not using the default).
 3. Follow the deck-design skill: write the slides in order with upsert_slide, one call per slide.
 4. Follow the deck-review skill: read the deck back with get_deck and save suggestions with set_suggestions.`;
 }
 
-export function editPrompt(request: string, slideId?: string): string {
+/** The last few turns, so a follow-up like "shorter" or "undo that" has context. */
+function recentConversation(deck: Deck): string {
+  const turns = deck.thread
+    .slice(0, -1)
+    .filter((e) => e.text.trim())
+    .slice(-6)
+    .map((e) => `${e.role === 'user' ? 'Person' : 'You'}: ${e.text.replace(/\s+/g, ' ').slice(0, 400)}`);
+  return turns.length ? `<recent_conversation>\n${turns.join('\n')}\n</recent_conversation>\n\n` : '';
+}
+
+export function editPrompt(deck: Deck, request: string, slideId?: string): string {
   return `Revise the existing presentation.
 
-<request${slideId ? ` slide="${slideId}"` : ''}>
+${recentConversation(deck)}<request${slideId ? ` slide="${slideId}"` : ''}>
 ${request}
 </request>
 

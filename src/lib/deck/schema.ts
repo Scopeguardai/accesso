@@ -149,16 +149,57 @@ export const suggestionSchema = z.object({
 });
 export type Suggestion = z.infer<typeof suggestionSchema>;
 
-export const briefSchema = z.object({
-  topic: short(200),
+/** The person's request for a new deck: a free prompt plus optional parameters. */
+export const briefObjectSchema = z.object({
+  prompt: z.string().trim().min(3).max(4000),
   audience: z.string().max(200).default(''),
   goal: z.string().max(300).default(''),
   slideCount: z.number().int().min(3).max(20).default(8),
   tone: z.string().max(120).default(''),
-  mustInclude: z.string().max(4000).default(''),
   palette: z.string().max(40).optional(),
 });
-export type Brief = z.infer<typeof briefSchema>;
+
+/** Accepts briefs saved before the prompt field existed ({ topic, mustInclude }). */
+export const briefSchema = z.preprocess((raw) => {
+  if (raw && typeof raw === 'object' && !('prompt' in raw)) {
+    const r = raw as Record<string, unknown>;
+    const parts = [r.topic, r.mustInclude].filter((x): x is string => typeof x === 'string' && x.trim() !== '');
+    return { ...r, prompt: parts.join('\n\n') };
+  }
+  return raw;
+}, briefObjectSchema);
+export type Brief = z.infer<typeof briefObjectSchema>;
+
+export const STEP_KINDS = ['search', 'read', 'outline', 'slide', 'remove', 'order', 'deck', 'suggest', 'note'] as const;
+export const stepSchema = z.object({
+  kind: z.enum(STEP_KINDS),
+  text: z.string(),
+  /** Knowledge-base path for "read" steps, slide id for slide steps. */
+  ref: z.string().optional(),
+});
+export type Step = z.infer<typeof stepSchema>;
+
+/** The conversation about a deck: the person's messages and the agent's runs. */
+export const threadEntrySchema = z.discriminatedUnion('role', [
+  z.object({
+    id: z.string(),
+    role: z.literal('user'),
+    at: z.string(),
+    text: z.string(),
+    slideId: z.string().optional(),
+    brief: briefObjectSchema.optional(),
+  }),
+  z.object({
+    id: z.string(),
+    role: z.literal('agent'),
+    at: z.string(),
+    status: z.enum(['working', 'done', 'error']),
+    text: z.string().default(''),
+    steps: z.array(stepSchema).default([]),
+  }),
+]);
+export type ThreadEntry = z.infer<typeof threadEntrySchema>;
+export type AgentEntry = Extract<ThreadEntry, { role: 'agent' }>;
 
 export const deckSchema = z.object({
   id,
@@ -172,7 +213,7 @@ export const deckSchema = z.object({
   outline: z.array(outlineItemSchema).default([]),
   slides: z.array(slideSchema).default([]),
   suggestions: z.array(suggestionSchema).default([]),
-  activity: z.array(z.object({ at: z.string(), text: z.string() })).default([]),
+  thread: z.array(threadEntrySchema).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

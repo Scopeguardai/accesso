@@ -29,6 +29,8 @@ const brandSchema = z.object({
   tagline: z.string(),
   website: z.string().optional(),
   copyright: z.string(),
+  /** Example briefs shown when starting a new presentation. */
+  starters: z.array(z.string()).default([]),
   assetBase: z.string(),
   fonts: z.object({ sans: fontSchema, mono: fontSchema }),
   logo: z.object({ wordmark: z.string(), mark: z.string() }),

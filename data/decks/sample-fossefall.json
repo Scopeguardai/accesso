@@ -5,14 +5,12 @@
   "title": "Fossefall: from infrastructure builder to compute platform",
   "palette": "fjord",
   "status": "ready",
-  "statusNote": "Hand-written sample deck. It uses only what is in the knowledge base, so it carries no figures yet.",
   "brief": {
-    "topic": "Introducing Fossefall and its platform strategy",
+    "prompt": "Introduce Fossefall and its platform strategy to people meeting the company for the first time: who we are, what we are building and where we are heading.",
     "audience": "People meeting Fossefall for the first time",
     "goal": "Understand what Fossefall is building and where it is heading",
     "slideCount": 10,
-    "tone": "",
-    "mustInclude": ""
+    "tone": ""
   },
   "outline": [
     {
@@ -229,7 +227,29 @@
       "text": "Add real milestones (sites, capacity, dates) to the knowledge base so this slide can show a dated timeline."
     }
   ],
-  "activity": [],
   "createdAt": "2026-11-23T19:00:00.000Z",
-  "updatedAt": "2026-11-23T19:00:00.000Z"
+  "updatedAt": "2026-11-23T19:00:00.000Z",
+  "thread": [
+    {
+      "id": "s1",
+      "role": "user",
+      "at": "2026-11-23T19:00:00.000Z",
+      "text": "Introduce Fossefall and its platform strategy to people meeting the company for the first time: who we are, what we are building and where we are heading.",
+      "brief": {
+        "prompt": "Introduce Fossefall and its platform strategy to people meeting the company for the first time: who we are, what we are building and where we are heading.",
+        "audience": "People meeting Fossefall for the first time",
+        "goal": "Understand what Fossefall is building and where it is heading",
+        "slideCount": 10,
+        "tone": ""
+      }
+    },
+    {
+      "id": "s2",
+      "role": "agent",
+      "at": "2026-11-23T19:00:00.000Z",
+      "status": "done",
+      "text": "This sample was written by hand from the knowledge base, so it shows every part of the deck format but carries no figures yet. Ask for any change below to see the agent work on it.",
+      "steps": []
+    }
+  ]
 }

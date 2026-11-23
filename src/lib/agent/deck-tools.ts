@@ -7,7 +7,7 @@ import {
   suggestionSchema,
   type Slide,
 } from '../deck/schema';
-import { logActivity, readDeck, updateDeck } from '../deck/store';
+import { logStep, readDeck, updateDeck } from '../deck/store';
 import { readKnowledge, searchKnowledge } from '../knowledge/search';
 
 /**
@@ -65,7 +65,7 @@ export function createDeckTools(deckId: string) {
   return {
     search_knowledge({ query, limit }: { query: string; limit?: number }): ToolReply {
       const hits = searchKnowledge(deck().client, query, limit ?? 5);
-      logActivity(deckId, `Searched knowledge base: "${query}" (${hits.length} found)`);
+      logStep(deckId, 'search', `Searched the knowledge base for “${query}” (${hits.length === 1 ? '1 match' : `${hits.length} matches`})`);
       if (hits.length === 0) return ok(`No knowledge-base entries match "${query}".`);
       return ok(
         hits
@@ -80,7 +80,7 @@ export function createDeckTools(deckId: string) {
     read_knowledge({ path }: { path: string }): ToolReply {
       const entry = readKnowledge(deck().client, path);
       if (!entry) return fail(`No knowledge-base entry at "${path}". Use a path from search_knowledge.`);
-      logActivity(deckId, `Read ${entry.path}`);
+      logStep(deckId, 'read', `Read “${entry.title}”`, entry.path);
       return ok(
         `path: ${entry.path}\ntitle: ${entry.title}\nstatus: ${entry.status || 'unknown'}\nsource: ${entry.source}\nupdated: ${entry.updated}\n\n${entry.body}`,
       );
@@ -105,7 +105,8 @@ export function createDeckTools(deckId: string) {
         if (title) d.title = title;
         if (palette) d.palette = palette;
       });
-      if (palette) logActivity(deckId, `Palette set to ${palette}`);
+      if (palette) logStep(deckId, 'deck', `Set the palette to ${brand().palettes[palette].label}`);
+      if (title) logStep(deckId, 'deck', `Titled the deck “${title}”`);
       return ok('Deck updated.');
     },
 
@@ -115,13 +116,15 @@ export function createDeckTools(deckId: string) {
       updateDeck(deckId, (d) => {
         d.outline = parsed.data;
       });
-      logActivity(deckId, `Outline written (${parsed.data.length} slides)`);
+      logStep(deckId, 'outline', `Planned ${parsed.data.length} slides`);
       return ok(`Outline saved with ${parsed.data.length} slides.`);
     },
 
     upsert_slide({ slide, afterId }: { slide: unknown; afterId?: string }): ToolReply {
       const parsed = slideSchema.safeParse(slide);
       if (!parsed.success) {
+        const sid = (slide as { id?: unknown })?.id;
+        logStep(deckId, 'note', `A slide${typeof sid === 'string' ? ` (“${sid}”)` : ''} didn't fit the format; revising it`);
         return fail(`Slide rejected. Fix these and call again:\n${formatIssues(parsed.error)}`);
       }
       const next = parsed.data;
@@ -140,10 +143,12 @@ export function createDeckTools(deckId: string) {
 
       let outcome = '';
       let rejected = '';
+      let replaced = false;
       updateDeck(deckId, (d) => {
         const existing = d.slides.findIndex((s) => s.id === next.id);
         if (existing >= 0) {
           d.slides[existing] = next;
+          replaced = true;
           outcome = `Slide "${next.id}" replaced at position ${existing + 1}.`;
           return;
         }
@@ -162,7 +167,7 @@ export function createDeckTools(deckId: string) {
         outcome = `Slide "${next.id}" added. The deck has ${d.slides.length} slides.`;
       });
       if (rejected) return fail(rejected);
-      logActivity(deckId, `Slide "${next.id}" saved (${next.layout})`);
+      logStep(deckId, 'slide', `${replaced ? 'Updated' : 'Wrote'} slide “${next.id}” as ${next.layout}`, next.id);
       return ok(outcome);
     },
 
@@ -176,7 +181,7 @@ export function createDeckTools(deckId: string) {
         }
       });
       if (!found) return fail(`No slide with id "${id}".`);
-      logActivity(deckId, `Slide "${id}" removed`);
+      logStep(deckId, 'remove', `Removed slide “${id}”`);
       return ok(`Slide "${id}" removed.`);
     },
 
@@ -187,7 +192,7 @@ export function createDeckTools(deckId: string) {
       updateDeck(deckId, (d) => {
         d.slides = ids.map((i) => d.slides.find((s) => s.id === i)!);
       });
-      logActivity(deckId, 'Slides reordered');
+      logStep(deckId, 'order', 'Reordered the slides');
       return ok('Slides reordered.');
     },
 
@@ -197,7 +202,7 @@ export function createDeckTools(deckId: string) {
       updateDeck(deckId, (d) => {
         d.suggestions = parsed.data;
       });
-      logActivity(deckId, `${parsed.data.length} suggestion(s) recorded`);
+      logStep(deckId, 'suggest', parsed.data.length === 0 ? 'Cleared the suggestions' : `Left ${parsed.data.length === 1 ? 'a suggestion' : `${parsed.data.length} suggestions`}`);
       return ok('Suggestions saved.');
     },
   };
