@@ -154,7 +154,7 @@ export default function Workspace({
   const widths = {
     ...(sbWidth && !projectsCollapsed ? { '--sb-w': `${sbWidth}px` } : {}),
     ...(midWidth && !conversationCollapsed
-      ? { '--mid-w': `min(${midWidth}px, calc(100vw - var(--sb-w) - ${PREVIEW_MIN}px))` }
+      ? { '--mid-w': `min(${midWidth}px, calc(100vw - var(--sb-space) - ${PREVIEW_MIN}px))` }
       : {}),
   } as CSSProperties;
   const toggleFocus = () => {

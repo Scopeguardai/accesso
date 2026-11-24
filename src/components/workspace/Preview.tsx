@@ -148,13 +148,18 @@ export default function Preview({
     <div className="pv">
       <div className="pv-bar">
         <div className="seg" role="group" aria-label="Preview size">
-          <button type="button" aria-pressed={mode === 'desktop'} onClick={() => setMode('desktop')}>
+          <button
+            type="button"
+            aria-pressed={mode === 'desktop'}
+            title="Desktop size"
+            onClick={() => setMode('desktop')}
+          >
             <IconDesktop />
-            Desktop
+            <span className="pv-text">Desktop</span>
           </button>
-          <button type="button" aria-pressed={mode === 'phone'} onClick={() => setMode('phone')}>
+          <button type="button" aria-pressed={mode === 'phone'} title="Phone size" onClick={() => setMode('phone')}>
             <IconPhone />
-            Phone
+            <span className="pv-text">Phone</span>
           </button>
         </div>
         <span className="grow" />
@@ -170,16 +175,16 @@ export default function Preview({
             <span className="label-long">{focused ? 'Show all' : 'Focus'}</span>
           </button>
         )}
-        <button type="button" className="btn-quiet" onClick={copy} aria-live="polite">
+        <button type="button" className="btn-quiet" onClick={copy} aria-live="polite" title="Copy link">
           {copied === 'ok' ? <IconCheck /> : <IconLink />}
           <span className="label-long">
             {copied === 'ok' ? 'Link copied' : copied === 'fail' ? 'Copy failed' : 'Copy link'}
           </span>
           <span className="label-short">{copied === 'ok' ? 'Copied' : copied === 'fail' ? 'Failed' : 'Link'}</span>
         </button>
-        <a className="btn-quiet" href={url} target="_blank" rel="noreferrer">
+        <a className="btn-quiet" href={url} target="_blank" rel="noreferrer" title="Open in a new tab">
           <IconExternal />
-          Open
+          <span className="pv-text">Open</span>
         </a>
       </div>
 
