@@ -120,17 +120,31 @@ export default function Workspace({
   const PREVIEW_MIN = 340;
   const clamp = (n: number, min: number, max: number) => Math.round(Math.min(Math.max(n, min), Math.max(min, max)));
   const edge = (selector: string) => root.current?.querySelector(selector)?.getBoundingClientRect();
+  // Dragging a divider well past the column's minimum width collapses the column.
+  const COLLAPSE_PAST = 48;
   const resizeProjects = (change: { x: number } | { step: number }) => {
     const current = edge('.sb')?.width ?? 248;
+    const wanted = 'x' in change ? change.x : current + change.step;
+    if (wanted < SB.min - COLLAPSE_PAST || ('step' in change && change.step < 0 && current <= SB.min)) {
+      setProjectsCollapsed(true);
+      return;
+    }
     const midNow = edge('.ws-chat, .mid-rail')?.width ?? 0;
     const room = window.innerWidth - midNow - PREVIEW_MIN;
-    setSbWidth(clamp('x' in change ? change.x : current + change.step, SB.min, Math.min(SB.max, room)));
+    setSbWidth(clamp(wanted, SB.min, Math.min(SB.max, room)));
   };
   const resizeConversation = (change: { x: number } | { step: number }) => {
     const box = edge('.ws-chat');
     if (!box) return;
+    const wanted = 'x' in change ? change.x - box.left : box.width + change.step;
+    const pastMinimum =
+      wanted < MID_MIN - COLLAPSE_PAST || ('step' in change && change.step < 0 && box.width <= MID_MIN);
+    if (pastMinimum && canCollapseConversation) {
+      setConversationPref(true);
+      return;
+    }
     const room = window.innerWidth - box.left - PREVIEW_MIN;
-    setMidWidth(clamp('x' in change ? change.x - box.left : box.width + change.step, MID_MIN, room));
+    setMidWidth(clamp(wanted, MID_MIN, room));
   };
   useEffect(() => {
     const value = `${projectsCollapsed ? 1 : 0}${conversationPref ? 1 : 0}.${sbWidth ?? 0}.${midWidth ?? 0}`;
@@ -139,7 +153,9 @@ export default function Workspace({
   // Dragged widths apply only to open columns; collapsed ones use the slim strip width from the stylesheet.
   const widths = {
     ...(sbWidth && !projectsCollapsed ? { '--sb-w': `${sbWidth}px` } : {}),
-    ...(midWidth && !conversationCollapsed ? { '--mid-w': `min(${midWidth}px, calc(100vw - var(--sb-w) - ${PREVIEW_MIN}px))` } : {}),
+    ...(midWidth && !conversationCollapsed
+      ? { '--mid-w': `min(${midWidth}px, calc(100vw - var(--sb-w) - ${PREVIEW_MIN}px))` }
+      : {}),
   } as CSSProperties;
   const toggleFocus = () => {
     const next = !focused;
