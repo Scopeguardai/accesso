@@ -21,5 +21,13 @@ export default async function StudioPage({ params }: Props) {
   const found = find(id);
   if (!found) notFound();
   const deck = settleInterrupted(found, isRunning(id));
-  return <Workspace key={id} brands={brandOptions()} decks={listDecks().map(summarize)} deck={deck} />;
+  return (
+    <Workspace
+      renderedAt={Date.now()}
+      key={id}
+      brands={brandOptions()}
+      decks={listDecks().map(summarize)}
+      deck={deck}
+    />
+  );
 }

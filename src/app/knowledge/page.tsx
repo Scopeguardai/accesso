@@ -17,6 +17,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
   const validEntry = entry && knowledge.some((k) => k.path === entry) ? entry : undefined;
   return (
     <Workspace
+      renderedAt={Date.now()}
       key="knowledge"
       view="knowledge"
       brands={brands}

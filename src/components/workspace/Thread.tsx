@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { ago } from '@/lib/deck/describe';
 import type { AgentEntry, Brief, Deck, Step, Suggestion, ThreadEntry } from '@/lib/deck/schema';
 import type { BrandOption } from '@/lib/workspace';
+import { useClock } from './clock';
 import {
   IconBook,
   IconChevron,
@@ -184,6 +185,7 @@ function AgentMessage({
   onGoto: (id: string) => void;
 }) {
   const working = entry.status === 'working';
+  const clock = useClock();
   return (
     <article className="msg msg-agent" data-status={entry.status} aria-busy={working}>
       <header className="msg-head">
@@ -193,7 +195,7 @@ function AgentMessage({
           <span className="msg-state">Working</span>
         ) : (
           <time dateTime={entry.at} suppressHydrationWarning>
-            {ago(entry.at)}
+            {ago(entry.at, clock.now, clock.local)}
           </time>
         )}
       </header>

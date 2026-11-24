@@ -24,12 +24,16 @@ export function slideName(s: Slide): string {
   }
 }
 
-/** "just now", "12 min ago", "3 h ago", "yesterday", "14 Nov". */
-export function ago(iso: string, now = Date.now()): string {
+/** "just now", "12 min ago", "3 h ago", "yesterday", "14 Nov". Pass `local: false` to format dates in UTC. */
+export function ago(iso: string, now = Date.now(), local = true): string {
   const s = Math.max(0, (now - Date.parse(iso)) / 1000);
   if (s < 60) return 'just now';
   if (s < 3600) return `${Math.floor(s / 60)} min ago`;
   if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
   if (s < 172800) return 'yesterday';
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(local ? {} : { timeZone: 'UTC' }),
+  });
 }

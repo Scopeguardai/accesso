@@ -6,6 +6,7 @@ import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
 import type { BrandOption } from '@/lib/workspace';
+import { ClockProvider } from './clock';
 import Composer from './Composer';
 import KnowledgeView from './KnowledgeView';
 import NewDeck from './NewDeck';
@@ -59,6 +60,7 @@ export default function Workspace({
   view,
   knowledge,
   entry,
+  renderedAt,
 }: {
   brands: BrandOption[];
   decks: DeckSummary[];
@@ -68,6 +70,8 @@ export default function Workspace({
   /** The knowledge entries for the knowledge view, and the one to open first. */
   knowledge?: KnowledgeSummary[];
   entry?: string;
+  /** When the server rendered the page, so the first browser render matches it. */
+  renderedAt: number;
 }) {
   const router = useRouter();
   const deckId = initialDeck?.id ?? null;
@@ -223,106 +227,120 @@ export default function Workspace({
   }, []);
 
   return (
-    <div className="ws" data-pane={pane} data-drawer={drawer ? 'open' : undefined}>
-      <Sidebar
-        brands={brands}
-        brandId={brandId}
-        onBrand={setBrandId}
-        decks={decks}
-        activeId={deckId}
-        section={section}
-        knowledgeCount={kbCount}
-        onClose={() => setDrawer(false)}
-      />
-      <button
-        type="button"
-        className="ws-scrim"
-        aria-label="Hide projects"
-        tabIndex={-1}
-        onClick={() => setDrawer(false)}
-      />
-
-      <header className="bar">
-        <button type="button" className="icon-btn bar-menu" onClick={() => setDrawer(true)} aria-label="Show projects">
-          <IconMenu />
-        </button>
-        {section === 'knowledge' ? (
-          <>
-            <span className="bar-title bar-title-static">Knowledge base</span>
-            <span className="status">
-              {kbCount === 1 ? '1 entry' : `${kbCount} entries`}
-              {brands.length > 1 && brand ? ` for ${brand.name}` : ''}
-            </span>
-          </>
-        ) : deck ? (
-          <>
-            <TitleField title={deck.title} onRename={(title) => patchDeck({ title })} />
-            <span className="status" data-status={deck.status}>
-              <span className="dot" data-status={deck.status} aria-hidden="true" />
-              {STATUS_TEXT[deck.status]}
-            </span>
-          </>
-        ) : (
-          <span className="bar-title bar-title-static">New presentation</span>
-        )}
-        <div className="seg bar-tabs" role="group" aria-label="Show">
-          <button type="button" aria-pressed={pane === 'chat'} onClick={() => setPane('chat')}>
-            {section === 'knowledge' ? 'Entries' : 'Chat'}
-          </button>
-          <button type="button" aria-pressed={pane === 'preview'} onClick={() => setPane('preview')}>
-            {section === 'knowledge' ? 'Entry' : 'Preview'}
-          </button>
-        </div>
-      </header>
-
-      {section === 'knowledge' && brand ? (
-        <KnowledgeView
-          key={brand.id}
-          brand={brand}
-          initial={brand.id === (entry?.split('/')[0] ?? brands[0]?.id) ? (knowledge ?? []) : []}
-          initialPath={entry?.startsWith(`${brand.id}/`) ? entry : undefined}
-          onCount={setKbCount}
-          onShowEntry={() => setPane('preview')}
+    <ClockProvider renderedAt={renderedAt}>
+      <div className="ws" data-pane={pane} data-drawer={drawer ? 'open' : undefined}>
+        <Sidebar
+          brands={brands}
+          brandId={brandId}
+          onBrand={setBrandId}
+          decks={decks}
+          activeId={deckId}
+          section={section}
+          knowledgeCount={kbCount}
+          onClose={() => setDrawer(false)}
         />
-      ) : (
-        <>
-          <section className="ws-chat" aria-label="Conversation">
-            {deck ? (
-              <>
-                <div
-                  className="ws-scroll"
-                  ref={scroller}
-                  onScroll={(e) => {
-                    const el = e.currentTarget;
-                    pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-                  }}
-                >
-                  <Thread deck={deck} brand={brand} busy={busy} onApply={sendEdit} onGoto={goto} />
-                </div>
-                <Composer
-                  deck={deck}
-                  brand={brand}
-                  inView={inView}
-                  busy={busy}
-                  error={error}
-                  onSend={sendEdit}
-                  onPalette={(palette) => patchDeck({ palette })}
-                />
-              </>
-            ) : brand ? (
-              <div className="ws-scroll">
-                <NewDeck brand={brand} busy={sending} error={error} onCreate={createDeck} />
-              </div>
-            ) : (
-              <p className="ws-empty">Add a brand pack to the brands folder to start.</p>
-            )}
-          </section>
+        <button
+          type="button"
+          className="ws-scrim"
+          aria-label="Hide projects"
+          tabIndex={-1}
+          onClick={() => setDrawer(false)}
+        />
 
-          <section className="ws-preview" aria-label="Presentation preview">
-            <Preview deck={deck} brand={brand} frameRef={frameRef} inView={inView} onInView={setInView} onGoto={goto} />
-          </section>
-        </>
-      )}
-    </div>
+        <header className="bar">
+          <button
+            type="button"
+            className="icon-btn bar-menu"
+            onClick={() => setDrawer(true)}
+            aria-label="Show projects"
+          >
+            <IconMenu />
+          </button>
+          {section === 'knowledge' ? (
+            <>
+              <span className="bar-title bar-title-static">Knowledge base</span>
+              <span className="status">
+                {kbCount === 1 ? '1 entry' : `${kbCount} entries`}
+                {brands.length > 1 && brand ? ` for ${brand.name}` : ''}
+              </span>
+            </>
+          ) : deck ? (
+            <>
+              <TitleField title={deck.title} onRename={(title) => patchDeck({ title })} />
+              <span className="status" data-status={deck.status}>
+                <span className="dot" data-status={deck.status} aria-hidden="true" />
+                {STATUS_TEXT[deck.status]}
+              </span>
+            </>
+          ) : (
+            <span className="bar-title bar-title-static">New presentation</span>
+          )}
+          <div className="seg bar-tabs" role="group" aria-label="Show">
+            <button type="button" aria-pressed={pane === 'chat'} onClick={() => setPane('chat')}>
+              {section === 'knowledge' ? 'Entries' : 'Chat'}
+            </button>
+            <button type="button" aria-pressed={pane === 'preview'} onClick={() => setPane('preview')}>
+              {section === 'knowledge' ? 'Entry' : 'Preview'}
+            </button>
+          </div>
+        </header>
+
+        {section === 'knowledge' && brand ? (
+          <KnowledgeView
+            key={brand.id}
+            brand={brand}
+            initial={brand.id === (entry?.split('/')[0] ?? brands[0]?.id) ? (knowledge ?? []) : []}
+            initialPath={entry?.startsWith(`${brand.id}/`) ? entry : undefined}
+            onCount={setKbCount}
+            onShowEntry={() => setPane('preview')}
+          />
+        ) : (
+          <>
+            <section className="ws-chat" aria-label="Conversation">
+              {deck ? (
+                <>
+                  <div
+                    className="ws-scroll"
+                    ref={scroller}
+                    onScroll={(e) => {
+                      const el = e.currentTarget;
+                      pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+                    }}
+                  >
+                    <Thread deck={deck} brand={brand} busy={busy} onApply={sendEdit} onGoto={goto} />
+                  </div>
+                  <Composer
+                    deck={deck}
+                    brand={brand}
+                    inView={inView}
+                    busy={busy}
+                    error={error}
+                    onSend={sendEdit}
+                    onPalette={(palette) => patchDeck({ palette })}
+                  />
+                </>
+              ) : brand ? (
+                <div className="ws-scroll">
+                  <NewDeck brand={brand} busy={sending} error={error} onCreate={createDeck} />
+                </div>
+              ) : (
+                <p className="ws-empty">Add a brand pack to the brands folder to start.</p>
+              )}
+            </section>
+
+            <section className="ws-preview" aria-label="Presentation preview">
+              <Preview
+                deck={deck}
+                brand={brand}
+                frameRef={frameRef}
+                inView={inView}
+                onInView={setInView}
+                onGoto={goto}
+              />
+            </section>
+          </>
+        )}
+      </div>
+    </ClockProvider>
   );
 }

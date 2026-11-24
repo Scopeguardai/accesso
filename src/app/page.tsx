@@ -5,5 +5,13 @@ import { brandOptions } from '@/lib/workspace';
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  return <Workspace key="new" brands={brandOptions()} decks={listDecks().map(summarize)} deck={null} />;
+  return (
+    <Workspace
+      renderedAt={Date.now()}
+      key="new"
+      brands={brandOptions()}
+      decks={listDecks().map(summarize)}
+      deck={null}
+    />
+  );
 }

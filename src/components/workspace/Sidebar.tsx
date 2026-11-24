@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ago } from '@/lib/deck/describe';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { BrandOption } from '@/lib/workspace';
+import { startOfDay, useClock, type Clock } from './clock';
 import { IconBook, IconClose, IconPlus } from './icons';
 
 const STATUS_LABEL: Record<DeckSummary['status'], string> = {
@@ -13,14 +14,13 @@ const STATUS_LABEL: Record<DeckSummary['status'], string> = {
 };
 
 /** Group projects the way chat apps do: by when they were last touched. */
-function groups(decks: DeckSummary[]): { label: string; items: DeckSummary[] }[] {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+function groups(decks: DeckSummary[], clock: Clock): { label: string; items: DeckSummary[] }[] {
+  const today = startOfDay(clock);
   const day = 86_400_000;
   const buckets = [
-    { label: 'Today', from: startOfToday.getTime() },
-    { label: 'Yesterday', from: startOfToday.getTime() - day },
-    { label: 'Previous 7 days', from: startOfToday.getTime() - 7 * day },
+    { label: 'Today', from: today },
+    { label: 'Yesterday', from: today - day },
+    { label: 'Previous 7 days', from: today - 7 * day },
     { label: 'Older', from: -Infinity },
   ].map((b) => ({ ...b, items: [] as DeckSummary[] }));
   const sorted = [...decks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
@@ -51,6 +51,7 @@ export default function Sidebar({
   onClose: () => void;
 }) {
   const brand = brands.find((b) => b.id === brandId);
+  const clock = useClock();
   return (
     <aside className="sb" aria-label="Projects">
       <div className="sb-head">
@@ -81,7 +82,7 @@ export default function Sidebar({
 
       <nav className="sb-list">
         {decks.length === 0 && <p className="sb-empty">Your presentations will be listed here.</p>}
-        {groups(decks).map((g) => (
+        {groups(decks, clock).map((g) => (
           <section key={g.label}>
             <h2 className="sb-group">{g.label}</h2>
             <ul>
@@ -99,7 +100,7 @@ export default function Sidebar({
                       {d.slideCount === 1 ? '1 slide' : `${d.slideCount} slides`}
                       <span aria-hidden="true" className="sb-sep" />
                       <time dateTime={d.updatedAt} suppressHydrationWarning>
-                        {ago(d.updatedAt)}
+                        {ago(d.updatedAt, clock.now, clock.local)}
                       </time>
                     </span>
                   </Link>

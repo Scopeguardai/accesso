@@ -10,3 +10,6 @@ next-env.d.ts
 # Generated decks stay on the machine; the sample deck is kept as a reference.
 data/decks/*
 !data/decks/sample-fossefall.json
+
+# Written by `next dev` on each start
+AGENTS.md
