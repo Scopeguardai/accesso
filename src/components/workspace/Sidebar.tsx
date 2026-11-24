@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { ago } from '@/lib/deck/describe';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { BrandOption } from '@/lib/workspace';
 import AccessoLogo from './AccessoLogo';
+import SettingsMenu from './SettingsMenu';
 import { startOfDay, useClock, type Clock } from './clock';
 import { IconBook, IconClose, IconCollapse, IconExpand, IconPlus } from './icons';
 
@@ -56,7 +56,6 @@ export default function Sidebar({
   onCollapse: () => void;
   onClose: () => void;
 }) {
-  const brand = brands.find((b) => b.id === brandId);
   const clock = useClock();
   return (
     <aside className="sb" aria-label="Projects">
@@ -93,9 +92,6 @@ export default function Sidebar({
       >
         <IconBook />
         <span className="sb-label">Knowledge base</span>
-        <span className="sb-count" aria-label={`${knowledgeCount} entries`}>
-          {knowledgeCount}
-        </span>
       </Link>
 
       <nav className="sb-list">
@@ -111,16 +107,9 @@ export default function Sidebar({
                     className={`sb-item${d.id === activeId ? ' is-active' : ''}`}
                     aria-current={d.id === activeId ? 'page' : undefined}
                   >
+                    <span className="dot" data-status={d.status} title={STATUS_LABEL[d.status]} />
+                    <span className="sr-only">{STATUS_LABEL[d.status]}: </span>
                     <span className="sb-item-title">{d.title}</span>
-                    <span className="sb-item-meta">
-                      <span className="dot" data-status={d.status} title={STATUS_LABEL[d.status]} />
-                      <span className="sr-only">{STATUS_LABEL[d.status]}, </span>
-                      {d.slideCount === 1 ? '1 slide' : `${d.slideCount} slides`}
-                      <span aria-hidden="true" className="sb-sep" />
-                      <time dateTime={d.updatedAt} suppressHydrationWarning>
-                        {ago(d.updatedAt, clock.now, clock.local)}
-                      </time>
-                    </span>
                   </Link>
                 </li>
               ))}
@@ -130,25 +119,7 @@ export default function Sidebar({
       </nav>
 
       <div className="sb-foot">
-        {brands.length > 1 ? (
-          <label className="sb-brand">
-            <span>Brand</span>
-            <select value={brandId} onChange={(e) => onBrand(e.target.value)} disabled={section === 'deck'}>
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          brand && (
-            <p className="sb-brand">
-              <span>Brand</span>
-              <strong>{brand.name}</strong>
-            </p>
-          )
-        )}
+        <SettingsMenu brands={brands} brandId={brandId} onBrand={onBrand} brandLocked={section === 'deck'} />
       </div>
     </aside>
   );

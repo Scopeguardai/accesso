@@ -152,3 +152,16 @@ export const IconChat = () => (
     <path d="M4 5.5A1.5 1.5 0 015.5 4h9A1.5 1.5 0 0116 5.5v6a1.5 1.5 0 01-1.5 1.5H9l-3.5 3v-3h0A1.5 1.5 0 014 11.5z" />
   </Icon>
 );
+export const IconSettings = () => (
+  <Icon>
+    <path d="M3.5 6h6M13.5 6h3M3.5 14h3M10.5 14h6" />
+    <circle cx="11.5" cy="6" r="2" />
+    <circle cx="8.5" cy="14" r="2" />
+  </Icon>
+);
+export const IconUser = () => (
+  <Icon>
+    <circle cx="10" cy="7.5" r="3" />
+    <path d="M4.5 16.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5" />
+  </Icon>
+);

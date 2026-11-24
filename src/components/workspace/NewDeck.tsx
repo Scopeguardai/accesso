@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import type { Brief } from '@/lib/deck/schema';
 import type { BrandOption } from '@/lib/workspace';
@@ -46,17 +45,10 @@ export default function NewDeck({
     });
   }
 
-  const drafts = brand.knowledge.filter((k) => k.status !== 'verified').length;
-
   return (
     <div className="new">
       <div className="new-inner">
         <h1 className="new-title">What are we presenting?</h1>
-        <p className="new-lede">
-          Describe it in your own words. The agent plans the story from the {brand.name} knowledge base, designs it in
-          the {brand.name} style and builds it in the preview as it goes.
-        </p>
-
         <form className="composer composer-new" onSubmit={submit} aria-label="New presentation">
           {error && (
             <p className="composer-error" role="alert">
@@ -158,32 +150,6 @@ export default function NewDeck({
             </ul>
           </section>
         )}
-
-        <details className="kb">
-          <summary>
-            <span className="new-h2">Knowledge the agent can use</span>
-            <span className="kb-count">
-              {brand.knowledge.length} {brand.knowledge.length === 1 ? 'file' : 'files'}
-              {drafts > 0 && `, ${drafts} not yet verified`}
-            </span>
-          </summary>
-          <ul>
-            {brand.knowledge.map((k) => (
-              <li key={k.path}>
-                <span>{k.title}</span>
-                <span className="kb-status" data-status={k.status || 'unknown'}>
-                  {k.status === 'verified' ? 'Verified' : 'Draft'}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="kb-note">
-            <Link href="/knowledge" className="link">
-              Open the knowledge base
-            </Link>{' '}
-            to add or check what the agent can use.
-          </p>
-        </details>
       </div>
     </div>
   );
