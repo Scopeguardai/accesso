@@ -24,7 +24,8 @@ The app is one screen in three columns, like a chat app:
   copy and an Open button. On a phone, Chat and Preview are tabs.
 - **Collapsing.** The projects and conversation columns each fold down to a slim strip
   (the « buttons); click the strip to open it again. **Focus** above the presentation
-  folds both at once. The layout is remembered between visits.
+  folds both at once. Drag the divider between two columns to resize them (double-click
+  it to reset). The layout is remembered between visits.
 
 - **Knowledge base.** The button under "New presentation" opens what the agent knows
   about the brand: search it the way the agent does, read and edit entries, mark them

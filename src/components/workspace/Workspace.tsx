@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
@@ -12,6 +12,7 @@ import Composer from './Composer';
 import KnowledgeView from './KnowledgeView';
 import NewDeck from './NewDeck';
 import Preview from './Preview';
+import Resizer from './Resizer';
 import Sidebar from './Sidebar';
 import Thread from './Thread';
 import { IconCollapse, IconExpand, IconMenu } from './icons';
@@ -110,10 +111,36 @@ export default function Workspace({
   const canCollapseConversation = section !== 'new';
   const conversationCollapsed = canCollapseConversation && conversationPref;
   const focused = projectsCollapsed && conversationCollapsed;
+  // Column widths set by dragging the dividers. Undefined means the default width.
+  const [sbWidth, setSbWidth] = useState(layout.projectsWidth);
+  const [midWidth, setMidWidth] = useState(layout.conversationWidth);
+  const root = useRef<HTMLDivElement>(null);
+  const SB = { min: 200, max: 420 };
+  const MID_MIN = 300;
+  const PREVIEW_MIN = 340;
+  const clamp = (n: number, min: number, max: number) => Math.round(Math.min(Math.max(n, min), Math.max(min, max)));
+  const edge = (selector: string) => root.current?.querySelector(selector)?.getBoundingClientRect();
+  const resizeProjects = (change: { x: number } | { step: number }) => {
+    const current = edge('.sb')?.width ?? 248;
+    const midNow = edge('.ws-chat, .mid-rail')?.width ?? 0;
+    const room = window.innerWidth - midNow - PREVIEW_MIN;
+    setSbWidth(clamp('x' in change ? change.x : current + change.step, SB.min, Math.min(SB.max, room)));
+  };
+  const resizeConversation = (change: { x: number } | { step: number }) => {
+    const box = edge('.ws-chat');
+    if (!box) return;
+    const room = window.innerWidth - box.left - PREVIEW_MIN;
+    setMidWidth(clamp('x' in change ? change.x - box.left : box.width + change.step, MID_MIN, room));
+  };
   useEffect(() => {
-    const value = `${projectsCollapsed ? 1 : 0}${conversationPref ? 1 : 0}`;
+    const value = `${projectsCollapsed ? 1 : 0}${conversationPref ? 1 : 0}.${sbWidth ?? 0}.${midWidth ?? 0}`;
     document.cookie = `accesso_layout=${value}; path=/; max-age=31536000; samesite=lax`;
-  }, [projectsCollapsed, conversationPref]);
+  }, [projectsCollapsed, conversationPref, sbWidth, midWidth]);
+  // Dragged widths apply only to open columns; collapsed ones use the slim strip width from the stylesheet.
+  const widths = {
+    ...(sbWidth && !projectsCollapsed ? { '--sb-w': `${sbWidth}px` } : {}),
+    ...(midWidth && !conversationCollapsed ? { '--mid-w': `min(${midWidth}px, calc(100vw - var(--sb-w) - ${PREVIEW_MIN}px))` } : {}),
+  } as CSSProperties;
   const toggleFocus = () => {
     const next = !focused;
     setProjectsCollapsed(next);
@@ -252,6 +279,8 @@ export default function Workspace({
     <ClockProvider renderedAt={renderedAt}>
       <div
         className="ws"
+        ref={root}
+        style={widths}
         data-pane={pane}
         data-drawer={drawer ? 'open' : undefined}
         data-projects={projectsCollapsed ? 'collapsed' : undefined}
@@ -269,6 +298,28 @@ export default function Workspace({
           onCollapse={() => setProjectsCollapsed((c) => !c)}
           onClose={() => setDrawer(false)}
         />
+        {!projectsCollapsed && (
+          <Resizer
+            which="projects"
+            label="Resize the projects column"
+            value={sbWidth}
+            min={SB.min}
+            max={SB.max}
+            onResize={resizeProjects}
+            onReset={() => setSbWidth(undefined)}
+          />
+        )}
+        {!conversationCollapsed && (
+          <Resizer
+            which="conversation"
+            label={`Resize the ${midName} column`}
+            value={midWidth}
+            min={MID_MIN}
+            max={1200}
+            onResize={resizeConversation}
+            onReset={() => setMidWidth(undefined)}
+          />
+        )}
         <button
           type="button"
           className="ws-scrim"
