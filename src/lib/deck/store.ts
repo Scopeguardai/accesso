@@ -114,6 +114,7 @@ export type DeckSummary = {
   brand: string;
   title: string;
   status: Deck['status'];
+  palette: string;
   slideCount: number;
   updatedAt: string;
 };
@@ -123,6 +124,7 @@ export const summarize = (d: Deck): DeckSummary => ({
   brand: d.brand,
   title: d.title,
   status: d.status,
+  palette: d.palette,
   slideCount: d.slides.length,
   updatedAt: d.updatedAt,
 });

@@ -165,3 +165,9 @@ export const IconUser = () => (
     <path d="M4.5 16.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5" />
   </Icon>
 );
+export const IconHistory = () => (
+  <Icon>
+    <path d="M4 10a6 6 0 101.9-4.4M4 4.5v3h3" />
+    <path d="M10 7v3.2l2 1.3" />
+  </Icon>
+);

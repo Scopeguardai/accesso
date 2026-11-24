@@ -1,4 +1,3 @@
-import { readLayout } from '@/lib/layout-pref';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Workspace from '@/components/workspace/Workspace';
@@ -25,7 +24,6 @@ export default async function StudioPage({ params }: Props) {
   return (
     <Workspace
       renderedAt={Date.now()}
-      layout={await readLayout()}
       key={id}
       brands={brandOptions()}
       decks={listDecks().map(summarize)}

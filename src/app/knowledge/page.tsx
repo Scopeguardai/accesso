@@ -1,4 +1,3 @@
-import { readLayout } from '@/lib/layout-pref';
 import type { Metadata } from 'next';
 import Workspace from '@/components/workspace/Workspace';
 import { listDecks, summarize } from '@/lib/deck/store';
@@ -19,7 +18,6 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
   return (
     <Workspace
       renderedAt={Date.now()}
-      layout={await readLayout()}
       key="knowledge"
       view="knowledge"
       brands={brands}

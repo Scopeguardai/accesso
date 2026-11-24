@@ -110,13 +110,7 @@ export default function Composer({
           </button>
         </div>
       </div>
-      {(busy || (target && slide)) && (
-        <p className="composer-hint">
-          {busy
-            ? 'The agent is working. You can send the next change when it finishes.'
-            : `Changes apply to “${slide ? slideName(slide) : ''}” only.`}
-        </p>
-      )}
+      {target && slide && <p className="composer-hint">Changes apply to “{slideName(slide)}” only.</p>}
     </form>
   );
 }

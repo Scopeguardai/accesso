@@ -270,7 +270,9 @@ export default function Thread({
           <AgentMessage
             key={e.id}
             entry={e}
-            suggestions={i === lastAgent && e.status === 'done' && deck.status !== 'generating' ? deck.suggestions : []}
+            suggestions={
+              i === lastAgent && e.status !== 'working' && deck.status !== 'generating' ? deck.suggestions : []
+            }
             busy={busy}
             slideNumber={slideNumber}
             onApply={(s) =>

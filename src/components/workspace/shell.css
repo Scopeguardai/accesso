@@ -1,0 +1,445 @@
+/*
+ * The canvas-first shell: a slim top bar, then one main area.
+ *   - Presentation: the deck fills the screen, with the prompt bar docked
+ *     under it and the History panel sliding in from the right.
+ *   - Home: the brief, then a gallery of presentations.
+ *   - Knowledge base: the list beside the open entry.
+ * Shared pieces (messages, message box, chips, menus, entry sheet) are
+ * styled in workspace.css; this file only lays them out.
+ */
+
+.ws.cv {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sections placed by the old grid by name; here they flow normally. */
+.cv .ws-chat,
+.cv .ws-preview {
+  grid-area: auto;
+}
+
+/* ---------- top bar ---------- */
+
+.top {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+  height: var(--bar-h);
+  padding: 0 calc(var(--gutter) - 8px) 0 var(--gutter);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.top-home {
+  display: flex;
+  flex: none;
+  color: #000;
+}
+
+.top-home svg {
+  display: block;
+  width: auto;
+  height: 1.75rem;
+}
+
+.cv:not([data-view='new']) .top-home svg {
+  height: 1.6rem;
+}
+
+.cv .top .bar-title {
+  margin-left: 0;
+}
+
+.top-page {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-left: 0.75rem;
+  padding-left: 0.85rem;
+  border-left: 1px solid var(--line);
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.top-count {
+  color: var(--mut);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.top .seg button {
+  padding: 0 0.5rem;
+}
+
+.cv .top .icon-btn[aria-pressed='true'] {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.cv .top .top-narrow,
+.cv .top .kb-tabs {
+  display: none;
+}
+
+/* profile and settings open downwards from the right of the bar */
+.top .settings-menu {
+  top: calc(100% + 6px);
+  right: 0;
+  bottom: auto;
+  left: auto;
+}
+
+.cv .avatar-sm {
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0.75rem;
+}
+
+/* ---------- presentation switcher ---------- */
+
+.switch {
+  flex: none;
+}
+
+.switch-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: var(--gutter);
+  width: min(20rem, calc(100vw - 2 * var(--gutter)));
+  max-height: min(28rem, 70vh);
+  overflow-y: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--bg);
+  box-shadow:
+    0 2px 4px rgb(28 31 29 / 0.06),
+    0 12px 32px rgb(28 31 29 / 0.16);
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.switch-row:hover {
+  background: var(--soft);
+}
+
+.switch-row[aria-current='page'] {
+  background: var(--soft);
+  font-weight: 600;
+}
+
+.switch-row svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--ink-2);
+}
+
+.switch-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switch-head {
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.6rem 0.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--mut);
+  font-size: 0.75rem;
+}
+
+/* ---------- presentation ---------- */
+
+.cv-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.cv-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--stage);
+  background-image: radial-gradient(rgb(28 31 29 / 0.13) 1px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+.cv .pv {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.cv .pv-strip ol {
+  margin: 0 auto;
+}
+
+.cv .pv-strip {
+  padding-bottom: 0.5rem;
+}
+
+/* the prompt bar under the deck */
+.dock {
+  flex: none;
+  padding: 0.15rem var(--gutter) 0.9rem;
+}
+
+.dock-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  max-width: 40rem;
+  margin: 0 auto 0.45rem;
+  min-height: 1.4rem;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.dock-text {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dock-text:hover {
+  color: var(--ink);
+}
+
+.dock-line[data-tone='error'] {
+  color: var(--red);
+}
+
+.dock-chip {
+  flex: none;
+  height: 1.4rem;
+  padding: 0 0.55rem;
+  border: 1px solid rgb(28 31 29 / 0.16);
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.75);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.dock-chip:hover {
+  background: #fff;
+}
+
+.dock .composer {
+  max-width: 40rem;
+  padding: 0;
+}
+
+.dock .composer-hint {
+  color: var(--ink-2);
+}
+
+/* history: the conversation with the agent */
+.hist {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: min(26rem, 100%);
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.hist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  height: 3rem;
+  padding: 0 calc(var(--gutter) - 8px) 0 var(--gutter);
+  border-bottom: 1px solid var(--line);
+}
+
+.hist-head h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hist .thread {
+  padding-top: 1.25rem;
+}
+
+@media (max-width: 1099px) {
+  .hist {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    box-shadow: 0 0 40px rgb(0 0 0 / 0.18);
+  }
+}
+
+/* ---------- home ---------- */
+
+.cv-home {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cv .new {
+  display: block;
+  min-height: 0;
+  padding: clamp(2.5rem, 11vh, 6.5rem) var(--gutter) 2.5rem;
+}
+
+.cv .new-title {
+  text-align: center;
+  font-size: 2rem;
+}
+
+.gal {
+  max-width: calc(41rem + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0.5rem var(--gutter) 4rem;
+}
+
+.gal ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 1.5rem 1.1rem;
+  margin-top: 0.8rem;
+}
+
+.gal-card {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.gal-cover {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 0.3rem;
+  border-radius: 6px;
+  background: var(--soft);
+  box-shadow: 0 0 0 1px rgb(28 31 29 / 0.08);
+  transition: box-shadow 0.12s ease;
+}
+
+.gal-card:hover .gal-cover {
+  box-shadow:
+    0 0 0 1px rgb(28 31 29 / 0.2),
+    0 8px 22px rgb(28 31 29 / 0.14);
+}
+
+.gal-mark {
+  display: block;
+  width: 52%;
+}
+
+.gal-mark svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gal-title {
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gal-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--mut);
+  font-size: 0.75rem;
+}
+
+/* ---------- knowledge base ---------- */
+
+.cv-kb {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 820px) {
+  .cv .top .top-wide,
+  .cv .top .top-text,
+  .cv .top .top-count {
+    display: none;
+  }
+
+  .cv .top .top-narrow {
+    display: inline-grid;
+  }
+
+  .cv .top .kb-tabs {
+    display: inline-flex;
+  }
+
+  .cv .top-page {
+    margin-left: 0.4rem;
+    padding-left: 0.6rem;
+  }
+
+  .cv .top .btn-quiet {
+    padding: 0 0.55rem;
+  }
+
+  .cv-kb {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cv .new-title {
+    font-size: 1.6rem;
+  }
+
+  .gal ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cv .composer-hint {
+    display: block;
+  }
+
+  .cv .top .seg button {
+    padding: 0 0.6rem;
+  }
+}

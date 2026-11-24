@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { BrandOption } from '@/lib/workspace';
-import { IconSettings, IconUser } from './icons';
+import { IconUser } from './icons';
 
 const NAME_KEY = 'accesso_profile_name';
 
@@ -68,13 +68,13 @@ export default function SettingsMenu({
       <button
         type="button"
         className="icon-btn"
-        aria-label="Settings"
-        title="Settings"
+        aria-label="Profile and settings"
+        title="Profile and settings"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        <IconSettings />
+        {initial ? <span className="avatar avatar-sm">{initial}</span> : <IconUser />}
       </button>
       {open && (
         <div className="settings-menu" role="dialog" aria-label="Settings">

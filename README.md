@@ -7,31 +7,26 @@ First brand: **Fossefall**.
 
 ## What works today
 
-The app is one screen in three columns, like a chat app:
+- **Home.** Describe a presentation in your own words, with parameters for slide
+  count, palette, audience, goal and tone, or start from one of the brand's example
+  briefs. Your presentations are listed underneath as tiles.
+- **Presentation.** The deck fills the screen and updates as the agent works. Under it
+  are the list of slides and a prompt bar: ask for a change to the whole deck or only
+  the slide in view, or switch palette at once. One line above the prompt bar says what
+  the agent is doing or last did.
+- **Top bar.** The logo goes home. The arrow beside the title switches presentation,
+  starts a new one or opens the knowledge base; the title can be renamed in place. On
+  the right: desktop or phone size, History, Share (copies the link), open in a new tab,
+  and the profile menu (your name and the brand).
+- **History.** The conversation with the agent slides in from the right: your requests,
+  the steps the agent took (searches, sources read, slides written), its replies and
+  its suggestions, each with an Apply button.
+- **Knowledge base.** What the agent knows about the brand: search it the way the agent
+  does, read and edit entries, mark them draft or verified, add new ones by typing or
+  uploading a `.md` or `.txt` file, and see which presentations cite each entry.
+  Sources the agent read link straight to their entry.
 
-- **Projects (left).** Every presentation, grouped by when it was last worked on, with a
-  dot showing whether it is ready, being worked on or needs attention. On narrower
-  screens this becomes a drawer behind the menu button.
-- **Conversation (middle).** Start a deck by describing it in your own words, with
-  parameters for slide count, palette, audience, goal and tone, or begin from one of the
-  brand's example briefs. The agent's replies show the steps it took (searches, sources
-  read, slides written) and end with suggestions you can apply with one click. Ask for
-  further changes in the message box, for the whole deck or only the slide in view.
-  The palette switches immediately, without waiting for the agent, and the deck title
-  can be renamed in place.
-- **Presentation (right).** The main view: the live deck, updated as the agent works,
-  shown as a desktop or a phone would see it, with a clickable list of slides, a link to
-  copy and an Open button. On a phone, Chat and Preview are tabs.
-- **Collapsing.** The projects and conversation columns each fold down to a slim strip
-  (the « buttons); click the strip to open it again. **Focus** above the presentation
-  folds both at once. Drag the divider between two columns to resize them (double-click
-  it to reset); dragging a column well below its minimum width collapses it. The layout is remembered between visits.
-
-- **Knowledge base.** The button under "New presentation" opens what the agent knows
-  about the brand: search it the way the agent does, read and edit entries, mark them
-  draft or verified, add new ones by typing or uploading a `.md` or `.txt` file, and see
-  which presentations cite each entry. Sources the agent read in a conversation link
-  straight to their entry.
+The same layout works on phones, where the deck is shown at phone size.
 
 Each deck also has its own page at `/d/<id>`: it pages through slides on a wide screen
 and reflows each slide into a single column on a phone.
@@ -85,7 +80,7 @@ data/decks/            one JSON file per deck, including its conversation
 src/lib/deck/          the deck format (schema.ts) and file store
 src/lib/agent/         the agent: its tools, prompts and the Claude Agent SDK run loop
 src/components/        the deck renderer (DeckView.tsx, deck.css)
-src/components/workspace/  the three-column app screen
+src/components/workspace/  the app screens (shell, history, knowledge base)
 src/app/               pages and API routes
 ```
 

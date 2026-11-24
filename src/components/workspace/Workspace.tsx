@@ -1,22 +1,26 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
-import type { LayoutPref } from '@/lib/layout-pref';
 import type { BrandOption } from '@/lib/workspace';
+import AccessoLogo from './AccessoLogo';
 import { ClockProvider } from './clock';
 import Composer from './Composer';
+import { copyText } from './copy';
+import Gallery from './Gallery';
 import KnowledgeView from './KnowledgeView';
 import NewDeck from './NewDeck';
-import Preview from './Preview';
-import Resizer from './Resizer';
-import Sidebar from './Sidebar';
+import Preview, { type PreviewMode } from './Preview';
+import SettingsMenu from './SettingsMenu';
+import Switcher from './Switcher';
 import Thread from './Thread';
-import { IconCollapse, IconExpand, IconMenu } from './icons';
+import { IconBook, IconCheck, IconClose, IconDesktop, IconExternal, IconHistory, IconLink, IconPhone } from './icons';
 import './workspace.css';
+import './shell.css';
 
 const STATUS_TEXT: Record<Deck['status'], string> = {
   generating: 'Agent working',
@@ -51,9 +55,23 @@ function TitleField({ title, onRename }: { title: string; onRename: (t: string) 
   );
 }
 
+/** One line under the canvas saying what the agent is doing or last did. */
+function statusLine(deck: Deck): { text: string; tone: 'working' | 'error' | 'done' } | null {
+  const last = deck.thread.findLast((e) => e.role === 'agent');
+  if (deck.status === 'generating') {
+    const step = last?.role === 'agent' && last.status === 'working' ? last.steps.at(-1)?.text : undefined;
+    return { text: step ?? 'Reading the request…', tone: 'working' };
+  }
+  if (last?.role === 'agent' && last.status === 'error') return { text: last.text, tone: 'error' };
+  const text = (last?.text ?? deck.statusNote ?? '').split(/\n\s*\n/)[0].trim();
+  return text ? { text, tone: 'done' } : null;
+}
+
 /**
- * The three-column workspace: projects, the conversation with the agent,
- * and the live presentation. Mounted once per project (keyed by deck id).
+ * The app shell. A presentation fills the screen with a prompt bar under it;
+ * the conversation with the agent is a History panel that slides in from the
+ * right. The home page is the brief plus a gallery, and the knowledge base
+ * is a list beside the open entry.
  */
 export default function Workspace({
   brands,
@@ -63,7 +81,6 @@ export default function Workspace({
   knowledge,
   entry,
   renderedAt,
-  layout,
 }: {
   brands: BrandOption[];
   decks: DeckSummary[];
@@ -75,8 +92,6 @@ export default function Workspace({
   entry?: string;
   /** When the server rendered the page, so the first browser render matches it. */
   renderedAt: number;
-  /** Which columns were collapsed last time, read from a cookie so the page renders that way at once. */
-  layout: LayoutPref;
 }) {
   const router = useRouter();
   const deckId = initialDeck?.id ?? null;
@@ -84,85 +99,36 @@ export default function Workspace({
   const [deck, setDeck] = useState(initialDeck);
   const [brandId, setBrandId] = useState(initialDeck?.brand ?? entry?.split('/')[0] ?? brands[0]?.id ?? '');
   const [inView, setInView] = useState<string | null>(initialDeck?.slides[0]?.id ?? null);
-  const [drawer, setDrawer] = useState(false);
+  const [history, setHistory] = useState(false);
+  const [mode, setMode] = useState<PreviewMode>('desktop');
   const [pane, setPane] = useState<'chat' | 'preview'>('chat');
+  const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const frameRef = useRef<HTMLIFrameElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const brand = brands.find((b) => b.id === brandId) ?? brands[0];
   const section = view === 'knowledge' ? 'knowledge' : initialDeck ? 'deck' : 'new';
+  const working = deck?.status === 'generating';
+  const busy = working || sending;
+
   const [kbCounts, setKbCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(brands.map((b) => [b.id, b.knowledge.length])),
   );
-  const kbCount = brand ? (kbCounts[brand.id] ?? 0) : 0;
   const brandKey = brand?.id;
   const setKbCount = useCallback(
     (n: number) => setKbCounts((c) => (brandKey ? { ...c, [brandKey]: n } : c)),
     [brandKey],
   );
-  const working = deck?.status === 'generating';
-  const busy = working || sending;
+  const kbCount = brand ? (kbCounts[brand.id] ?? 0) : 0;
 
-  // Collapsible columns. The presentation (or knowledge entry) column always stays.
-  // On the new-presentation screen the conversation holds the brief, so it never collapses there.
-  const [projectsCollapsed, setProjectsCollapsed] = useState(layout.projects);
-  const [conversationPref, setConversationPref] = useState(layout.conversation);
-  const canCollapseConversation = section !== 'new';
-  const conversationCollapsed = canCollapseConversation && conversationPref;
-  const focused = projectsCollapsed && conversationCollapsed;
-  // Column widths set by dragging the dividers. Undefined means the default width.
-  const [sbWidth, setSbWidth] = useState(layout.projectsWidth);
-  const [midWidth, setMidWidth] = useState(layout.conversationWidth);
-  const root = useRef<HTMLDivElement>(null);
-  const SB = { min: 200, max: 420 };
-  const MID_MIN = 300;
-  const PREVIEW_MIN = 340;
-  const clamp = (n: number, min: number, max: number) => Math.round(Math.min(Math.max(n, min), Math.max(min, max)));
-  const edge = (selector: string) => root.current?.querySelector(selector)?.getBoundingClientRect();
-  // Dragging a divider well past the column's minimum width collapses the column.
-  const COLLAPSE_PAST = 48;
-  const resizeProjects = (change: { x: number } | { step: number }) => {
-    const current = edge('.sb')?.width ?? 248;
-    const wanted = 'x' in change ? change.x : current + change.step;
-    if (wanted < SB.min - COLLAPSE_PAST || ('step' in change && change.step < 0 && current <= SB.min)) {
-      setProjectsCollapsed(true);
-      return;
-    }
-    const midNow = edge('.ws-chat, .mid-rail')?.width ?? 0;
-    const room = window.innerWidth - midNow - PREVIEW_MIN;
-    setSbWidth(clamp(wanted, SB.min, Math.min(SB.max, room)));
-  };
-  const resizeConversation = (change: { x: number } | { step: number }) => {
-    const box = edge('.ws-chat');
-    if (!box) return;
-    const wanted = 'x' in change ? change.x - box.left : box.width + change.step;
-    const pastMinimum =
-      wanted < MID_MIN - COLLAPSE_PAST || ('step' in change && change.step < 0 && box.width <= MID_MIN);
-    if (pastMinimum && canCollapseConversation) {
-      setConversationPref(true);
-      return;
-    }
-    const room = window.innerWidth - box.left - PREVIEW_MIN;
-    setMidWidth(clamp(wanted, MID_MIN, room));
-  };
+  // On a phone, show the deck as a phone would. On a wide screen, open the
+  // history for a deck that is still being written, so its progress is visible.
+  const startedWorking = useRef(initialDeck?.status === 'generating');
   useEffect(() => {
-    const value = `${projectsCollapsed ? 1 : 0}${conversationPref ? 1 : 0}.${sbWidth ?? 0}.${midWidth ?? 0}`;
-    document.cookie = `accesso_layout=${value}; path=/; max-age=31536000; samesite=lax`;
-  }, [projectsCollapsed, conversationPref, sbWidth, midWidth]);
-  // Dragged widths apply only to open columns; collapsed ones use the slim strip width from the stylesheet.
-  const widths = {
-    ...(sbWidth && !projectsCollapsed ? { '--sb-w': `${sbWidth}px` } : {}),
-    ...(midWidth && !conversationCollapsed
-      ? { '--mid-w': `min(${midWidth}px, calc(100vw - var(--sb-space) - ${PREVIEW_MIN}px))` }
-      : {}),
-  } as CSSProperties;
-  const toggleFocus = () => {
-    const next = !focused;
-    setProjectsCollapsed(next);
-    setConversationPref(next);
-  };
-  const midName = section === 'knowledge' ? 'entries' : 'conversation';
+    if (window.matchMedia('(max-width: 820px)').matches) setMode('phone');
+    else if (startedWorking.current && window.matchMedia('(min-width: 1100px)').matches) setHistory(true);
+  }, []);
 
   const syncSummary = (next: Deck) =>
     setDecks((list) => {
@@ -171,6 +137,7 @@ export default function Workspace({
         brand: next.brand,
         title: next.title,
         status: next.status,
+        palette: next.palette,
         slideCount: next.slides.length,
         updatedAt: next.updatedAt,
       };
@@ -200,7 +167,7 @@ export default function Workspace({
     return () => clearInterval(timer);
   }, [working, refreshDeck]);
 
-  // Keep the status dots of other projects current while any of them is working.
+  // Keep the status of other presentations current while any of them is being worked on.
   const othersWorking = decks.some((d) => d.status === 'generating' && d.id !== deckId);
   useEffect(() => {
     if (!othersWorking) return;
@@ -208,10 +175,10 @@ export default function Workspace({
     return () => clearInterval(timer);
   }, [othersWorking, refreshList]);
 
-  // Stay at the bottom of the conversation as it grows, unless the person has scrolled up.
+  // Stay at the bottom of the history as it grows, unless the person has scrolled up.
   const pinned = useRef(true);
   const lastEntry = deck?.thread.at(-1);
-  const growth = `${deck?.thread.length}:${lastEntry?.role === 'agent' ? lastEntry.steps.length + lastEntry.text.length : 0}:${deck?.suggestions.length}`;
+  const growth = `${history}:${deck?.thread.length}:${lastEntry?.role === 'agent' ? lastEntry.steps.length + lastEntry.text.length : 0}:${deck?.suggestions.length}`;
   useLayoutEffect(() => {
     const el = scroller.current;
     if (el && pinned.current) el.scrollTop = el.scrollHeight;
@@ -287,82 +254,32 @@ export default function Workspace({
 
   const goto = useCallback((slideId: string) => {
     setInView(slideId);
-    setPane('preview');
     frameRef.current?.contentWindow?.postMessage({ type: 'accesso:goto', id: slideId }, window.location.origin);
+    // On a small screen the history covers the deck, so close it to show the slide.
+    if (window.matchMedia('(max-width: 1099px)').matches) setHistory(false);
   }, []);
+
+  async function copyLink() {
+    if (!deck) return;
+    const ok = await copyText(`${window.location.origin}/d/${deck.id}`);
+    setCopied(ok ? 'ok' : 'fail');
+    setTimeout(() => setCopied('idle'), 2200);
+  }
+
+  const line = deck ? statusLine(deck) : null;
+  const suggestionCount = deck && !working ? deck.suggestions.length : 0;
 
   return (
     <ClockProvider renderedAt={renderedAt}>
-      <div
-        className="ws"
-        ref={root}
-        style={widths}
-        data-pane={pane}
-        data-drawer={drawer ? 'open' : undefined}
-        data-projects={projectsCollapsed ? 'collapsed' : undefined}
-        data-mid={conversationCollapsed ? 'collapsed' : undefined}
-      >
-        <Sidebar
-          brands={brands}
-          brandId={brandId}
-          onBrand={setBrandId}
-          decks={decks}
-          activeId={deckId}
-          section={section}
-          knowledgeCount={kbCount}
-          collapsed={projectsCollapsed}
-          onCollapse={() => setProjectsCollapsed((c) => !c)}
-          onClose={() => setDrawer(false)}
-        />
-        {!projectsCollapsed && (
-          <Resizer
-            which="projects"
-            label="Resize the projects column"
-            value={sbWidth}
-            min={SB.min}
-            max={SB.max}
-            onResize={resizeProjects}
-            onReset={() => setSbWidth(undefined)}
-          />
-        )}
-        {!conversationCollapsed && (
-          <Resizer
-            which="conversation"
-            label={`Resize the ${midName} column`}
-            value={midWidth}
-            min={MID_MIN}
-            max={1200}
-            onResize={resizeConversation}
-            onReset={() => setMidWidth(undefined)}
-          />
-        )}
-        <button
-          type="button"
-          className="ws-scrim"
-          aria-label="Hide projects"
-          tabIndex={-1}
-          onClick={() => setDrawer(false)}
-        />
+      <div className="ws cv" data-view={section} data-pane={section === 'knowledge' ? pane : undefined}>
+        <header className="top">
+          <Link href="/" className="top-home" aria-label="Accesso home" title="Home">
+            {section === 'new' ? <AccessoLogo /> : <AccessoLogo variant="mark" />}
+          </Link>
 
-        <header className="bar">
-          <button
-            type="button"
-            className="icon-btn bar-menu"
-            onClick={() => setDrawer(true)}
-            aria-label="Show projects"
-          >
-            <IconMenu />
-          </button>
-          {section === 'knowledge' ? (
+          {deck ? (
             <>
-              <span className="bar-title bar-title-static">Knowledge base</span>
-              <span className="status">
-                {kbCount === 1 ? '1 entry' : `${kbCount} entries`}
-                {brands.length > 1 && brand ? ` for ${brand.name}` : ''}
-              </span>
-            </>
-          ) : deck ? (
-            <>
+              <Switcher decks={decks} activeId={deck.id} />
               <TitleField title={deck.title} onRename={(title) => patchDeck({ title })} />
               <span className="status" data-status={deck.status}>
                 <span className="dot" data-status={deck.status} aria-hidden="true" />
@@ -370,112 +287,179 @@ export default function Workspace({
               </span>
             </>
           ) : (
-            <span className="bar-title bar-title-static">New presentation</span>
+            <>
+              {section === 'knowledge' && (
+                <span className="top-page">
+                  Knowledge base
+                  <span className="top-count">{kbCount === 1 ? '1 entry' : `${kbCount} entries`}</span>
+                </span>
+              )}
+              <span className="grow" />
+            </>
           )}
-          {canCollapseConversation && (
-            <button
-              type="button"
-              className="icon-btn bar-collapse"
-              onClick={() => setConversationPref(true)}
-              aria-label={`Collapse the ${midName}`}
-              title={`Collapse the ${midName}`}
+
+          {section === 'knowledge' && (
+            <div className="seg kb-tabs" role="group" aria-label="Show">
+              <button type="button" aria-pressed={pane === 'chat'} onClick={() => setPane('chat')}>
+                Entries
+              </button>
+              <button type="button" aria-pressed={pane === 'preview'} onClick={() => setPane('preview')}>
+                Entry
+              </button>
+            </div>
+          )}
+
+          {deck && (
+            <>
+              <div className="seg top-wide" role="group" aria-label="Preview size">
+                <button
+                  type="button"
+                  aria-pressed={mode === 'desktop'}
+                  onClick={() => setMode('desktop')}
+                  aria-label="Desktop size"
+                  title="Desktop size"
+                >
+                  <IconDesktop />
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={mode === 'phone'}
+                  onClick={() => setMode('phone')}
+                  aria-label="Phone size"
+                  title="Phone size"
+                >
+                  <IconPhone />
+                </button>
+              </div>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setHistory((h) => !h)}
+                aria-pressed={history}
+                aria-label="History"
+                title="History: the conversation with the agent"
+              >
+                <IconHistory />
+              </button>
+              <button type="button" className="btn-quiet" onClick={copyLink} aria-live="polite" title="Copy the link">
+                {copied === 'ok' ? <IconCheck /> : <IconLink />}
+                <span className="top-text">
+                  {copied === 'ok' ? 'Link copied' : copied === 'fail' ? 'Copy failed' : 'Share'}
+                </span>
+              </button>
+              <a
+                className="icon-btn top-wide"
+                href={`/d/${deck.id}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Open the presentation in a new tab"
+                title="Open in a new tab"
+              >
+                <IconExternal />
+              </a>
+            </>
+          )}
+
+          {section !== 'deck' && (
+            <Link
+              href={section === 'knowledge' ? '/' : '/knowledge'}
+              className="btn-quiet top-wide"
+              title={section === 'knowledge' ? 'Back to presentations' : 'What the agent knows'}
             >
-              <IconCollapse />
-            </button>
+              {section === 'knowledge' ? (
+                'Presentations'
+              ) : (
+                <>
+                  <IconBook />
+                  Knowledge base
+                </>
+              )}
+            </Link>
           )}
-          <div className="seg bar-tabs" role="group" aria-label="Show">
-            <button type="button" aria-pressed={pane === 'chat'} onClick={() => setPane('chat')}>
-              {section === 'knowledge' ? 'Entries' : 'Chat'}
-            </button>
-            <button type="button" aria-pressed={pane === 'preview'} onClick={() => setPane('preview')}>
-              {section === 'knowledge' ? 'Entry' : 'Preview'}
-            </button>
-          </div>
+          {section === 'new' && (
+            <Link href="/knowledge" className="icon-btn top-narrow" aria-label="Knowledge base" title="Knowledge base">
+              <IconBook />
+            </Link>
+          )}
+          <SettingsMenu brands={brands} brandId={brandId} onBrand={setBrandId} brandLocked={section === 'deck'} />
         </header>
 
-        {conversationCollapsed && (
-          <div className="mid-rail">
-            <button
-              type="button"
-              className="icon-btn mid-rail-menu"
-              onClick={() => setDrawer(true)}
-              aria-label="Show projects"
-              title="Show projects"
-            >
-              <IconMenu />
-            </button>
-            <button
-              type="button"
-              className="mid-rail-open"
-              onClick={() => setConversationPref(false)}
-              aria-label={`Show the ${midName}`}
-              title={`Show the ${midName}`}
-            >
-              <IconExpand />
-              {deck && <span className="dot" data-status={deck.status} aria-hidden="true" />}
-              <span className="mid-rail-label">
-                {section === 'knowledge' ? 'Entries' : (deck?.title ?? 'Conversation')}
-              </span>
-            </button>
-          </div>
-        )}
-
         {section === 'knowledge' && brand ? (
-          <KnowledgeView
-            key={brand.id}
-            brand={brand}
-            initial={brand.id === (entry?.split('/')[0] ?? brands[0]?.id) ? (knowledge ?? []) : []}
-            initialPath={entry?.startsWith(`${brand.id}/`) ? entry : undefined}
-            onCount={setKbCount}
-            onShowEntry={() => setPane('preview')}
-          />
-        ) : (
-          <>
-            <section className="ws-chat" aria-label="Conversation">
-              {deck ? (
-                <>
-                  <div
-                    className="ws-scroll"
-                    ref={scroller}
-                    onScroll={(e) => {
-                      const el = e.currentTarget;
-                      pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-                    }}
-                  >
-                    <Thread deck={deck} brand={brand} busy={busy} onApply={sendEdit} onGoto={goto} />
-                  </div>
-                  <Composer
-                    deck={deck}
-                    brand={brand}
-                    inView={inView}
-                    busy={busy}
-                    error={error}
-                    onSend={sendEdit}
-                    onPalette={(palette) => patchDeck({ palette })}
-                  />
-                </>
-              ) : brand ? (
-                <div className="ws-scroll">
-                  <NewDeck brand={brand} busy={sending} error={error} onCreate={createDeck} />
-                </div>
-              ) : (
-                <p className="ws-empty">Add a brand pack to the brands folder to start.</p>
-              )}
-            </section>
+          <div className="cv-kb">
+            <KnowledgeView
+              key={brand.id}
+              brand={brand}
+              initial={brand.id === (entry?.split('/')[0] ?? brands[0]?.id) ? (knowledge ?? []) : []}
+              initialPath={entry?.startsWith(`${brand.id}/`) ? entry : undefined}
+              onCount={setKbCount}
+              onShowEntry={() => setPane('preview')}
+            />
+          </div>
+        ) : deck ? (
+          <div className="cv-body" data-history={history ? 'open' : undefined}>
+            <main className="cv-main">
+              <Preview deck={deck} mode={mode} frameRef={frameRef} inView={inView} onInView={setInView} onGoto={goto} />
+              <div className="dock">
+                {(line || suggestionCount > 0) && (
+                  <p className="dock-line" data-tone={line?.tone}>
+                    {line?.tone === 'working' && <span className="dot" data-status="generating" aria-hidden="true" />}
+                    {line && (
+                      <button type="button" className="dock-text" onClick={() => setHistory(true)} title="Open history">
+                        {line.text}
+                      </button>
+                    )}
+                    {suggestionCount > 0 && (
+                      <button type="button" className="dock-chip" onClick={() => setHistory(true)}>
+                        {suggestionCount === 1 ? '1 suggestion' : `${suggestionCount} suggestions`}
+                      </button>
+                    )}
+                  </p>
+                )}
+                <Composer
+                  deck={deck}
+                  brand={brand}
+                  inView={inView}
+                  busy={busy}
+                  error={error}
+                  onSend={sendEdit}
+                  onPalette={(palette) => patchDeck({ palette })}
+                />
+              </div>
+            </main>
 
-            <section className="ws-preview" aria-label="Presentation preview">
-              <Preview
-                deck={deck}
-                brand={brand}
-                frameRef={frameRef}
-                inView={inView}
-                onInView={setInView}
-                onGoto={goto}
-                focused={focused}
-                onToggleFocus={canCollapseConversation ? toggleFocus : undefined}
-              />
-            </section>
-          </>
+            {history && (
+              <aside className="hist" aria-label="History">
+                <header className="hist-head">
+                  <h2>History</h2>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => setHistory(false)}
+                    aria-label="Close history"
+                  >
+                    <IconClose />
+                  </button>
+                </header>
+                <div
+                  className="ws-scroll"
+                  ref={scroller}
+                  onScroll={(e) => {
+                    const el = e.currentTarget;
+                    pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+                  }}
+                >
+                  <Thread deck={deck} brand={brand} busy={busy} onApply={sendEdit} onGoto={goto} />
+                </div>
+              </aside>
+            )}
+          </div>
+        ) : brand ? (
+          <main className="cv-home">
+            <NewDeck brand={brand} busy={sending} error={error} onCreate={createDeck} />
+            <Gallery decks={decks} brands={brands} />
+          </main>
+        ) : (
+          <p className="ws-empty">Add a brand pack to the brands folder to start.</p>
         )}
       </div>
     </ClockProvider>
