@@ -330,14 +330,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: var(--bar-h);
-  padding: 0 0.6rem 0 1rem;
+  height: 4.25rem;
+  padding: 0 0.6rem 0 0.95rem;
 }
 
 .sb-name {
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  color: #000;
   text-decoration: none;
+}
+
+.sb-logo {
+  display: block;
+  height: 2.15rem;
+  width: auto;
+}
+
+.sb-mark {
+  display: none;
+  width: 2rem;
+  height: 2rem;
 }
 
 .ws .sb-close {
@@ -535,13 +548,20 @@
     overflow: hidden;
   }
 
-  .ws[data-projects='collapsed'] :is(.sb-name, .sb-label, .sb-count, .sb-list, .sb-foot) {
+  .ws[data-projects='collapsed'] :is(.sb-logo, .sb-label, .sb-count, .sb-list, .sb-foot) {
     display: none;
   }
 
+  .ws[data-projects='collapsed'] .sb-mark {
+    display: block;
+  }
+
   .ws[data-projects='collapsed'] .sb-head {
-    justify-content: center;
-    padding: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    height: auto;
+    padding: 0.85rem 0 0.35rem;
   }
 
   .ws[data-projects='collapsed'] :is(.sb-new, .sb-nav) {

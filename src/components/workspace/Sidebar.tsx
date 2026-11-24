@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ago } from '@/lib/deck/describe';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { BrandOption } from '@/lib/workspace';
+import AccessoLogo from './AccessoLogo';
 import { startOfDay, useClock, type Clock } from './clock';
 import { IconBook, IconClose, IconCollapse, IconExpand, IconPlus } from './icons';
 
@@ -60,8 +61,9 @@ export default function Sidebar({
   return (
     <aside className="sb" aria-label="Projects">
       <div className="sb-head">
-        <Link href="/" className="sb-name">
-          Accesso
+        <Link href="/" className="sb-name" aria-label="Accesso, new presentation">
+          <AccessoLogo className="sb-logo" />
+          <AccessoLogo variant="mark" className="sb-mark" />
         </Link>
         <button
           type="button"
