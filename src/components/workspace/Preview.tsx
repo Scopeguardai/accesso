@@ -131,7 +131,8 @@ export default function Preview({
   if (!deck) return brand ? <BrandBoard brand={brand} /> : null;
 
   const base = BASE[mode];
-  const pad = mode === 'phone' ? 32 : 40;
+  // Twice the column gutter (16px), so the deck sits the same distance from both edges as everything else.
+  const pad = 32;
   const scale =
     size.w > 0 ? Math.min((size.w - pad) / base.w, (size.h - pad) / base.h, mode === 'phone' ? 1 : Infinity) : 0;
   const index = inView ? deck.slides.findIndex((s) => s.id === inView) : -1;
