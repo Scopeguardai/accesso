@@ -5,7 +5,7 @@ import { ago } from '@/lib/deck/describe';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { BrandOption } from '@/lib/workspace';
 import { startOfDay, useClock, type Clock } from './clock';
-import { IconBook, IconClose, IconPlus } from './icons';
+import { IconBook, IconClose, IconCollapse, IconExpand, IconPlus } from './icons';
 
 const STATUS_LABEL: Record<DeckSummary['status'], string> = {
   generating: 'Agent working',
@@ -39,6 +39,8 @@ export default function Sidebar({
   activeId,
   section,
   knowledgeCount,
+  collapsed,
+  onCollapse,
   onClose,
 }: {
   brands: BrandOption[];
@@ -48,6 +50,9 @@ export default function Sidebar({
   activeId: string | null;
   section: 'new' | 'deck' | 'knowledge';
   knowledgeCount: number;
+  /** Folded down to a slim strip of icons (wide screens only). */
+  collapsed: boolean;
+  onCollapse: () => void;
   onClose: () => void;
 }) {
   const brand = brands.find((b) => b.id === brandId);
@@ -58,23 +63,34 @@ export default function Sidebar({
         <Link href="/" className="sb-name">
           Accesso
         </Link>
+        <button
+          type="button"
+          className="icon-btn sb-collapse"
+          onClick={onCollapse}
+          aria-label={collapsed ? 'Show projects' : 'Collapse projects'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Show projects' : 'Collapse projects'}
+        >
+          {collapsed ? <IconExpand /> : <IconCollapse />}
+        </button>
         <button type="button" className="icon-btn sb-close" onClick={onClose} aria-label="Hide projects">
           <IconClose />
         </button>
       </div>
 
-      <Link href="/" className={`sb-new${section === 'new' ? ' is-active' : ''}`}>
+      <Link href="/" className={`sb-new${section === 'new' ? ' is-active' : ''}`} title="New presentation">
         <IconPlus />
-        New presentation
+        <span className="sb-label">New presentation</span>
       </Link>
 
       <Link
         href="/knowledge"
         className={`sb-nav${section === 'knowledge' ? ' is-active' : ''}`}
         aria-current={section === 'knowledge' ? 'page' : undefined}
+        title="Knowledge base"
       >
         <IconBook />
-        <span>Knowledge base</span>
+        <span className="sb-label">Knowledge base</span>
         <span className="sb-count" aria-label={`${knowledgeCount} entries`}>
           {knowledgeCount}
         </span>

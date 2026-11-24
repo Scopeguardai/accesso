@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
+import type { LayoutPref } from '@/lib/layout-pref';
 import type { BrandOption } from '@/lib/workspace';
 import { ClockProvider } from './clock';
 import Composer from './Composer';
@@ -13,7 +14,7 @@ import NewDeck from './NewDeck';
 import Preview from './Preview';
 import Sidebar from './Sidebar';
 import Thread from './Thread';
-import { IconMenu } from './icons';
+import { IconCollapse, IconExpand, IconMenu } from './icons';
 import './workspace.css';
 
 const STATUS_TEXT: Record<Deck['status'], string> = {
@@ -61,6 +62,7 @@ export default function Workspace({
   knowledge,
   entry,
   renderedAt,
+  layout,
 }: {
   brands: BrandOption[];
   decks: DeckSummary[];
@@ -72,6 +74,8 @@ export default function Workspace({
   entry?: string;
   /** When the server rendered the page, so the first browser render matches it. */
   renderedAt: number;
+  /** Which columns were collapsed last time, read from a cookie so the page renders that way at once. */
+  layout: LayoutPref;
 }) {
   const router = useRouter();
   const deckId = initialDeck?.id ?? null;
@@ -98,6 +102,24 @@ export default function Workspace({
   );
   const working = deck?.status === 'generating';
   const busy = working || sending;
+
+  // Collapsible columns. The presentation (or knowledge entry) column always stays.
+  // On the new-presentation screen the conversation holds the brief, so it never collapses there.
+  const [projectsCollapsed, setProjectsCollapsed] = useState(layout.projects);
+  const [conversationPref, setConversationPref] = useState(layout.conversation);
+  const canCollapseConversation = section !== 'new';
+  const conversationCollapsed = canCollapseConversation && conversationPref;
+  const focused = projectsCollapsed && conversationCollapsed;
+  useEffect(() => {
+    const value = `${projectsCollapsed ? 1 : 0}${conversationPref ? 1 : 0}`;
+    document.cookie = `accesso_layout=${value}; path=/; max-age=31536000; samesite=lax`;
+  }, [projectsCollapsed, conversationPref]);
+  const toggleFocus = () => {
+    const next = !focused;
+    setProjectsCollapsed(next);
+    setConversationPref(next);
+  };
+  const midName = section === 'knowledge' ? 'entries' : 'conversation';
 
   const syncSummary = (next: Deck) =>
     setDecks((list) => {
@@ -228,7 +250,13 @@ export default function Workspace({
 
   return (
     <ClockProvider renderedAt={renderedAt}>
-      <div className="ws" data-pane={pane} data-drawer={drawer ? 'open' : undefined}>
+      <div
+        className="ws"
+        data-pane={pane}
+        data-drawer={drawer ? 'open' : undefined}
+        data-projects={projectsCollapsed ? 'collapsed' : undefined}
+        data-mid={conversationCollapsed ? 'collapsed' : undefined}
+      >
         <Sidebar
           brands={brands}
           brandId={brandId}
@@ -237,6 +265,8 @@ export default function Workspace({
           activeId={deckId}
           section={section}
           knowledgeCount={kbCount}
+          collapsed={projectsCollapsed}
+          onCollapse={() => setProjectsCollapsed((c) => !c)}
           onClose={() => setDrawer(false)}
         />
         <button
@@ -275,6 +305,17 @@ export default function Workspace({
           ) : (
             <span className="bar-title bar-title-static">New presentation</span>
           )}
+          {canCollapseConversation && (
+            <button
+              type="button"
+              className="icon-btn bar-collapse"
+              onClick={() => setConversationPref(true)}
+              aria-label={`Collapse the ${midName}`}
+              title={`Collapse the ${midName}`}
+            >
+              <IconCollapse />
+            </button>
+          )}
           <div className="seg bar-tabs" role="group" aria-label="Show">
             <button type="button" aria-pressed={pane === 'chat'} onClick={() => setPane('chat')}>
               {section === 'knowledge' ? 'Entries' : 'Chat'}
@@ -284,6 +325,33 @@ export default function Workspace({
             </button>
           </div>
         </header>
+
+        {conversationCollapsed && (
+          <div className="mid-rail">
+            <button
+              type="button"
+              className="icon-btn mid-rail-menu"
+              onClick={() => setDrawer(true)}
+              aria-label="Show projects"
+              title="Show projects"
+            >
+              <IconMenu />
+            </button>
+            <button
+              type="button"
+              className="mid-rail-open"
+              onClick={() => setConversationPref(false)}
+              aria-label={`Show the ${midName}`}
+              title={`Show the ${midName}`}
+            >
+              <IconExpand />
+              {deck && <span className="dot" data-status={deck.status} aria-hidden="true" />}
+              <span className="mid-rail-label">
+                {section === 'knowledge' ? 'Entries' : (deck?.title ?? 'Conversation')}
+              </span>
+            </button>
+          </div>
+        )}
 
         {section === 'knowledge' && brand ? (
           <KnowledgeView
@@ -336,6 +404,8 @@ export default function Workspace({
                 inView={inView}
                 onInView={setInView}
                 onGoto={goto}
+                focused={focused}
+                onToggleFocus={canCollapseConversation ? toggleFocus : undefined}
               />
             </section>
           </>

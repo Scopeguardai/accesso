@@ -14,7 +14,8 @@ export function useAutosize(value: string) {
     const el = ref.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
+    // A hidden box (in a collapsed column) measures 0; leave it at its natural height until it is shown.
+    if (el.scrollHeight > 0) el.style.height = `${el.scrollHeight}px`;
   }, [value]);
   return ref;
 }

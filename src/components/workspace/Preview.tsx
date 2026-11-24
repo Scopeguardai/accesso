@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { slideName } from '@/lib/deck/describe';
 import type { Deck } from '@/lib/deck/schema';
 import type { BrandOption } from '@/lib/workspace';
-import { IconCheck, IconDesktop, IconExternal, IconLink, IconPhone } from './icons';
+import { IconCheck, IconDesktop, IconExternal, IconFocus, IconLink, IconPhone, IconUnfocus } from './icons';
 
 /** The size the deck page is rendered at before being scaled to fit the column. */
 const BASE = { desktop: { w: 1280, h: 720 }, phone: { w: 390, h: 844 } } as const;
@@ -76,6 +76,8 @@ export default function Preview({
   inView,
   onInView,
   onGoto,
+  focused = false,
+  onToggleFocus,
 }: {
   deck: Deck | null;
   brand?: BrandOption;
@@ -83,6 +85,9 @@ export default function Preview({
   inView: string | null;
   onInView: (id: string) => void;
   onGoto: (id: string) => void;
+  /** Whether the other columns are collapsed, and how to toggle that. */
+  focused?: boolean;
+  onToggleFocus?: () => void;
 }) {
   const [mode, setMode] = useState<'desktop' | 'phone'>('desktop');
   // On a phone, show the deck as a phone would by default.
@@ -152,6 +157,18 @@ export default function Preview({
           </button>
         </div>
         <span className="grow" />
+        {onToggleFocus && (
+          <button
+            type="button"
+            className="btn-quiet pv-focus"
+            onClick={onToggleFocus}
+            aria-pressed={focused}
+            title={focused ? 'Show the projects and conversation again' : 'Collapse the other columns'}
+          >
+            {focused ? <IconUnfocus /> : <IconFocus />}
+            <span className="label-long">{focused ? 'Show all' : 'Focus'}</span>
+          </button>
+        )}
         <button type="button" className="btn-quiet" onClick={copy} aria-live="polite">
           {copied === 'ok' ? <IconCheck /> : <IconLink />}
           <span className="label-long">

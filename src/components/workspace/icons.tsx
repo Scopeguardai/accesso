@@ -121,3 +121,34 @@ export const IconCheck = () => (
     <path d="M4.5 10.5l3.5 3.5 7.5-8" />
   </Icon>
 );
+export const IconPanelLeft = () => (
+  <Icon>
+    <rect x="3" y="4" width="14" height="12" rx="1.5" />
+    <path d="M8 4v12" />
+  </Icon>
+);
+export const IconCollapse = () => (
+  <Icon>
+    <path d="M11 6l-4 4 4 4M15 6l-4 4 4 4" />
+  </Icon>
+);
+export const IconExpand = () => (
+  <Icon>
+    <path d="M5 6l4 4-4 4M9 6l4 4-4 4" />
+  </Icon>
+);
+export const IconFocus = () => (
+  <Icon>
+    <path d="M3.5 7.5v-4h4M16.5 7.5v-4h-4M3.5 12.5v4h4M16.5 12.5v4h-4" />
+  </Icon>
+);
+export const IconUnfocus = () => (
+  <Icon>
+    <path d="M7.5 3.5v4h-4M12.5 3.5v4h4M7.5 16.5v-4h-4M12.5 16.5v-4h4" />
+  </Icon>
+);
+export const IconChat = () => (
+  <Icon>
+    <path d="M4 5.5A1.5 1.5 0 015.5 4h9A1.5 1.5 0 0116 5.5v6a1.5 1.5 0 01-1.5 1.5H9l-3.5 3v-3h0A1.5 1.5 0 014 11.5z" />
+  </Icon>
+);

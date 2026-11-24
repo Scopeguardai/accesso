@@ -19,9 +19,12 @@ The app is one screen in three columns, like a chat app:
   further changes in the message box, for the whole deck or only the slide in view.
   The palette switches immediately, without waiting for the agent, and the deck title
   can be renamed in place.
-- **Presentation (right).** The live deck, updated as the agent works, shown as a
-  desktop or a phone would see it, with a clickable list of slides, a link to copy and
-  an Open button. On a phone, Chat and Preview are tabs.
+- **Presentation (right).** The main view: the live deck, updated as the agent works,
+  shown as a desktop or a phone would see it, with a clickable list of slides, a link to
+  copy and an Open button. On a phone, Chat and Preview are tabs.
+- **Collapsing.** The projects and conversation columns each fold down to a slim strip
+  (the « buttons); click the strip to open it again. **Focus** above the presentation
+  folds both at once. The layout is remembered between visits.
 
 - **Knowledge base.** The button under "New presentation" opens what the agent knows
   about the brand: search it the way the agent does, read and edit entries, mark them
