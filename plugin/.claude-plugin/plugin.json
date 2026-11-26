@@ -1,5 +1,6 @@
 {
   "name": "accesso",
-  "version": "0.1.0",
-  "description": "Skills for planning, designing and reviewing brand-true presentations as structured deck data."
+  "version": "0.2.0",
+  "description": "Make brand-true presentations for any client: plan the story from the client's knowledge, build it on the client's Design System, and review it before it goes out.",
+  "author": { "name": "Accesso" }
 }

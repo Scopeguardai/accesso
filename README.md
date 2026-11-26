@@ -75,7 +75,8 @@ npm run build
 brands/<brand>/        brand.json (fonts, palettes, images) and BRAND.md (rules the agent reads)
 public/brands/<brand>/ the font, logo and image files themselves
 knowledge/<client>/    Markdown the agent may cite; see knowledge/README.md
-plugin/skills/         content-flow, deck-design, deck-review: how the agent works
+plugin/                the Claude plugin; its content-flow and deck-review skills are shared with the app
+src/lib/agent/skills/  deck-design: how the app's agent writes slides in the deck format
 data/decks/            one JSON file per deck, including its conversation
 src/lib/deck/          the deck format (schema.ts) and file store
 src/lib/agent/         the agent: its tools, prompts and the Claude Agent SDK run loop
@@ -94,9 +95,17 @@ which is what keeps every deck on brand and lets the same deck reflow for phones
 the web. It searches and reads the knowledge base, and reads and changes the one deck it
 was started for (`src/lib/agent/deck-tools.ts`).
 
-**Skills are plain files.** The three skills in `plugin/skills` are loaded into the
+**Skills are plain files.** Three skills (content flow and review from `plugin/skills`, deck design from `src/lib/agent/skills`) are loaded into the
 agent's instructions on every run, together with the brand's `BRAND.md`. The `plugin`
 folder is also a valid Claude plugin, so the same skills can be installed in Claude.
+
+## Using it inside Claude
+
+For the internal team, the same method runs inside Claude with no app to host. The
+`plugin/` folder is a Claude plugin with four skills: `new-deck`, `add-client`,
+`content-flow` and `deck-review`. Each client has a Design System in Claude (the brand)
+and a Google Drive folder at `Accesso knowledge / <Client name>` (the facts). See
+`plugin/README.md`. To package it: `cd plugin && zip -r ../accesso.plugin .`
 
 ## Adding a brand
 

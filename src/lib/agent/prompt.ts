@@ -2,12 +2,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Brand } from '../brand/load';
 import { LAYOUT_GUIDE, LAYOUTS, type Deck } from '../deck/schema';
-import { SKILLS_DIR } from '../paths';
+import { ROOT, SKILLS_DIR } from '../paths';
 
-/** The skills live in plugin/skills so the same files also install as a Claude plugin. */
+/**
+ * The agent's skills are plain files. Content flow and review are shared with
+ * the Claude plugin (plugin/skills); deck design is specific to this app's
+ * deck format and lives beside the agent.
+ */
+const APP_SKILLS_DIR = path.join(ROOT, 'src', 'lib', 'agent', 'skills');
+
 function skill(name: string): string {
-  const raw = fs.readFileSync(path.join(SKILLS_DIR, name, 'SKILL.md'), 'utf8');
-  return raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').trim();
+  const file = [APP_SKILLS_DIR, SKILLS_DIR].map((dir) => path.join(dir, name, 'SKILL.md')).find((f) => fs.existsSync(f));
+  if (!file) throw new Error(`Skill "${name}" not found`);
+  return fs.readFileSync(file, 'utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').trim();
 }
 
 export function systemPrompt(brand: Brand): string {
