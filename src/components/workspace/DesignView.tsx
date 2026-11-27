@@ -30,6 +30,7 @@ const PAIRS: { text: ColourRole; on: ColourRole; label: string }[] = [
 ];
 
 const SECTIONS = [
+  ['details', 'Brand details'],
   ['logo', 'Logo'],
   ['colours', 'Colour palettes'],
   ['type', 'Typography'],
@@ -38,7 +39,10 @@ const SECTIONS = [
   ['briefs', 'Example briefs'],
 ] as const;
 
-type Draft = Pick<DesignData, 'defaultPalette' | 'palettes' | 'images' | 'starters' | 'guide'>;
+type Draft = Pick<
+  DesignData,
+  'name' | 'tagline' | 'website' | 'defaultPalette' | 'palettes' | 'images' | 'starters' | 'guide'
+>;
 
 const isHex = (v: string) => /^#[0-9A-Fa-f]{6}$/.test(v);
 
@@ -55,6 +59,9 @@ function contrast(a: string, b: string) {
 
 function draftOf(d: DesignData): Draft {
   return {
+    name: d.name,
+    tagline: d.tagline,
+    website: d.website,
     defaultPalette: d.defaultPalette,
     palettes: d.palettes.map((p) => ({ ...p, colours: { ...p.colours } })),
     images: d.images.map((i) => ({ ...i })),
@@ -117,7 +124,13 @@ const decks = (n: number) => (n === 1 ? '1 deck' : `${n} decks`);
  * the page and saved together. Logo, font and image files are uploaded or
  * removed one at a time, and those changes are saved straight away.
  */
-export default function DesignView({ design: initial }: { design: DesignData }) {
+export default function DesignView({
+  design: initial,
+  brands,
+}: {
+  design: DesignData;
+  brands: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const [saved, setSaved] = useState(initial);
   const [draft, setDraft] = useState<Draft>(() => draftOf(initial));
@@ -131,6 +144,32 @@ export default function DesignView({ design: initial }: { design: DesignData }) 
   const [imageForm, setImageForm] = useState<{ file: File; alt: string; use: string } | null>(null);
   const [confirmImage, setConfirmImage] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState<string | null>(null);
+  const [newBrand, setNewBrand] = useState<{ name: string; tagline: string; website: string } | null>(null);
+  const [newBrandError, setNewBrandError] = useState('');
+
+  async function createBrand(e: FormEvent) {
+    e.preventDefault();
+    if (!newBrand) return;
+    if (!newBrand.name.trim()) {
+      setNewBrandError('Give the brand a name first.');
+      return;
+    }
+    setBusy('new-brand');
+    setNewBrandError('');
+    try {
+      const res = await fetch('/api/brands', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(newBrand),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'The brand could not be created. Try again.');
+      window.location.assign(`/design?brand=${encodeURIComponent(data.id)}`);
+    } catch (err) {
+      setNewBrandError((err as Error).message);
+      setBusy(null);
+    }
+  }
   const [assetVersion, setAssetVersion] = useState(0);
   const guideRef = useAutosize(draft.guide);
 
@@ -280,6 +319,9 @@ export default function DesignView({ design: initial }: { design: DesignData }) 
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          name: draft.name,
+          tagline: draft.tagline,
+          website: draft.website,
           defaultPalette: draft.defaultPalette,
           palettes: Object.fromEntries(draft.palettes.map((p) => [p.key, { label: p.label, colours: p.colours }])),
           images: draft.images.map(({ id, alt, use }) => ({ id, alt, use })),
@@ -318,6 +360,19 @@ export default function DesignView({ design: initial }: { design: DesignData }) 
             </li>
           ))}
         </ul>
+        <p className="ds-nav-title ds-nav-brands">Brands</p>
+        <ul>
+          {brands.map((b) => (
+            <li key={b.id}>
+              <a href={`/design?brand=${b.id}`} aria-current={b.id === saved.id ? 'page' : undefined}>
+                {b.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <button type="button" className="btn-quiet ds-new" onClick={() => setNewBrand({ name: '', tagline: '', website: '' })}>
+          New brand
+        </button>
       </nav>
 
       <div className="ds-main">
@@ -327,7 +382,103 @@ export default function DesignView({ design: initial }: { design: DesignData }) 
             What the agent follows when it designs a {saved.name} deck. Changes apply to every {saved.name} deck,
             including ones already made, the next time they are opened.
           </p>
+          <button
+            type="button"
+            className="btn-quiet ds-new-narrow"
+            onClick={() => setNewBrand({ name: '', tagline: '', website: '' })}
+          >
+            New brand
+          </button>
         </header>
+
+        {newBrand && (
+          <form className="ds-add ds-add-brand" onSubmit={createBrand} noValidate aria-label="New brand">
+            <p className="ds-add-file">New brand</p>
+            <label>
+              <span>Name</span>
+              <input
+                value={newBrand.name}
+                maxLength={60}
+                autoFocus
+                onChange={(e) => setNewBrand({ ...newBrand, name: e.target.value })}
+              />
+            </label>
+            <label>
+              <span>Tagline (optional)</span>
+              <input
+                value={newBrand.tagline}
+                maxLength={120}
+                onChange={(e) => setNewBrand({ ...newBrand, tagline: e.target.value })}
+              />
+            </label>
+            <label>
+              <span>Website (optional)</span>
+              <input
+                value={newBrand.website}
+                maxLength={200}
+                placeholder="www.example.com"
+                onChange={(e) => setNewBrand({ ...newBrand, website: e.target.value })}
+              />
+            </label>
+            {newBrandError && (
+              <p className="ds-msg" data-tone="error" role="alert">
+                {newBrandError}
+              </p>
+            )}
+            <p className="ds-add-hint">
+              It starts with a placeholder logo, starter colours, fonts and rules. You then add the brand&apos;s own.
+            </p>
+            <div className="ds-add-actions">
+              <button type="submit" className="btn-ink" disabled={busy === 'new-brand'}>
+                {busy === 'new-brand' ? 'Creating…' : 'Create brand'}
+              </button>
+              <button type="button" className="btn-quiet" onClick={() => setNewBrand(null)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
+        {saved.todo.length > 0 && (
+          <div className="ds-todo" role="status">
+            <p>
+              <b>Still to add before making decks</b>
+            </p>
+            <ul>
+              {saved.todo.map((t) => (
+                <li key={t.text}>
+                  <a href={`#ds-${t.section}`}>{t.text}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <section id="ds-details" className="ds-sec">
+          <h2>Brand details</h2>
+          <div className="ds-details">
+            <label>
+              <span>Name</span>
+              <input value={draft.name} maxLength={60} onChange={(e) => update((d) => ({ ...d, name: e.target.value }))} />
+            </label>
+            <label>
+              <span>Tagline</span>
+              <input
+                value={draft.tagline}
+                maxLength={120}
+                onChange={(e) => update((d) => ({ ...d, tagline: e.target.value }))}
+              />
+            </label>
+            <label>
+              <span>Website</span>
+              <input
+                value={draft.website}
+                maxLength={200}
+                onChange={(e) => update((d) => ({ ...d, website: e.target.value }))}
+              />
+            </label>
+          </div>
+        </section>
 
         <section id="ds-logo" className="ds-sec">
           <h2>Logo</h2>

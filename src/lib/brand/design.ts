@@ -15,6 +15,7 @@ import {
   sanitizeSvg,
   slugify,
 } from './assets';
+import { PLACEHOLDER_MARK, STARTER_GUIDE_MARK, STARTER_PALETTE_SOURCE } from './create';
 import { clearBrandCache, listBrands, loadBrand } from './load';
 
 /** The ten colours of a palette, in the order the design system page shows them. */
@@ -37,7 +38,10 @@ export type DesignData = {
   id: string;
   name: string;
   tagline: string;
+  website: string;
   assetBase: string;
+  /** What still holds starter material and needs the brand's own. */
+  todo: { section: string; text: string }[];
   defaultPalette: string;
   palettes: {
     key: string;
@@ -66,11 +70,21 @@ export function designData(brandId: string): DesignData {
   const decks = listDecks().filter((d) => d.brand === brandId);
   // A deck whose palette is missing is drawn with the default palette.
   const paletteOf = (d: (typeof decks)[number]) => (b.palettes[d.palette] ? d.palette : b.defaultPalette);
+  const todo: DesignData['todo'] = [];
+  if (b.svg.wordmark.includes(PLACEHOLDER_MARK)) todo.push({ section: 'logo', text: 'Upload the wordmark' });
+  if (b.svg.mark.includes(PLACEHOLDER_MARK)) todo.push({ section: 'logo', text: 'Upload the symbol' });
+  if (Object.values(b.palettes).some((p) => p.source === STARTER_PALETTE_SOURCE)) {
+    todo.push({ section: 'colours', text: "Set the brand's colours" });
+  }
+  if (b.images.length === 0) todo.push({ section: 'images', text: 'Add images' });
+  if (b.guide.includes(STARTER_GUIDE_MARK)) todo.push({ section: 'rules', text: 'Write the brand rules' });
   return {
     id: b.id,
     name: b.name,
     tagline: b.tagline,
+    website: b.website ?? '',
     assetBase: b.assetBase,
+    todo,
     defaultPalette: b.defaultPalette,
     palettes: Object.entries(b.palettes).map(([key, p]) => ({
       key,
@@ -97,6 +111,14 @@ export function designData(brandId: string): DesignData {
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colours must be written as # and six digits, like #062C3D.');
 
 export const designInputSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'The brand needs a name.')
+    .max(60, 'Keep the name under 60 characters.')
+    .regex(/^[^<>{}\n\r]+$/, 'Use plain text for the name.'),
+  tagline: z.string().trim().max(120, 'Keep the tagline under 120 characters.'),
+  website: z.string().trim().max(200, 'Keep the website under 200 characters.'),
   defaultPalette: z.string(),
   palettes: z
     .record(
@@ -130,6 +152,8 @@ export class DesignError extends Error {}
 
 type RawBrand = {
   name: string;
+  tagline: string;
+  website?: string;
   assetBase: string;
   defaultPalette: string;
   palettes: Record<string, Record<string, string>>;
@@ -172,11 +196,21 @@ export function saveDesign(brandId: string, input: DesignInput): DesignData {
     throw new DesignError('The images have changed since the page was opened. Reload and try again.');
   }
 
+  raw.name = input.name;
+  raw.tagline = input.tagline;
+  if (input.website) raw.website = input.website;
+  else delete raw.website;
   raw.defaultPalette = input.defaultPalette;
   raw.palettes = Object.fromEntries(
     keys.map((key) => {
       const p = input.palettes[key];
-      return [key, { ...(raw.palettes[key] ?? {}), label: p.label, ...uppercase(p.colours) }];
+      const before = raw.palettes[key] ?? {};
+      const colours = uppercase(p.colours);
+      const next: Record<string, string> = { ...before, label: p.label, ...colours };
+      // Once a starter palette's colours are changed, it is the brand's own.
+      const changed = Object.entries(colours).some(([k, v]) => (before[k] ?? '').toUpperCase() !== v);
+      if (before.source === STARTER_PALETTE_SOURCE && changed) delete next.source;
+      return [key, next];
     }),
   );
   raw.images = raw.images.map((img) => {

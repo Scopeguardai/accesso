@@ -666,3 +666,97 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* brands, new brand, checklist and details */
+.ds .ds-nav-brands {
+  margin-top: 1.5rem;
+}
+
+.ds .ds-nav a[aria-current='page'] {
+  background: var(--soft);
+  color: var(--ink);
+  font-weight: 550;
+}
+
+.ds .ds-new {
+  margin-top: 0.75rem;
+}
+
+.ds .ds-head .ds-new-narrow {
+  display: none;
+  margin-top: 0.9rem;
+}
+
+.ds .ds-add-brand {
+  max-width: 28rem;
+  margin-top: 1.5rem;
+}
+
+.ds .ds-add-hint {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.ds .ds-todo {
+  max-width: 38rem;
+  margin-top: 1.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.6rem;
+  background: #fbf3e4;
+  font-size: 0.875rem;
+}
+
+.ds .ds-todo ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.25rem;
+  margin-top: 0.3rem;
+}
+
+.ds .ds-todo a {
+  color: var(--amber);
+  text-underline-offset: 3px;
+}
+
+.ds .ds-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.ds .ds-details label {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ds .ds-details span {
+  color: var(--mut);
+  font-size: 0.75rem;
+}
+
+.ds .ds-details input {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.ds .ds-details input:focus {
+  border-color: var(--mut);
+  outline: none;
+}
+
+@media (max-width: 820px) {
+  .ds .ds-head .ds-new-narrow {
+    display: inline-flex;
+  }
+
+  .ds .ds-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

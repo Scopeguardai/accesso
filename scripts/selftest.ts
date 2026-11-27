@@ -8,7 +8,9 @@ import path from 'node:path';
 import { createDeckTools } from '../src/lib/agent/deck-tools';
 import { systemPrompt } from '../src/lib/agent/prompt';
 import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand/assets';
-import { imageFor, loadBrand } from '../src/lib/brand/load';
+import { createBrand, newBrandSchema } from '../src/lib/brand/create';
+import { designData } from '../src/lib/brand/design';
+import { imageFor, listBrands, loadBrand } from '../src/lib/brand/load';
 import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
 import { listKnowledge, readKnowledge, searchKnowledge } from '../src/lib/knowledge/search';
@@ -210,6 +212,22 @@ check('uploaded logos keep their drawing and lose anything that could run code',
   const jpg = imageInfo(fs.readFileSync(path.join(ROOT, 'public', brand.assetBase, brand.images[0].file)));
   assert.ok(jpg && jpg.width > 0 && jpg.height > 0, 'reads a JPEG size');
   assert.equal(imageInfo(Buffer.from('GIF89a')), null);
+});
+
+check('a new brand starts with working starter assets and a list of what to add', () => {
+  const id = createBrand(newBrandSchema.parse({ name: 'Self Test <Brand'.replace('<', ''), tagline: 't' }));
+  try {
+    assert.match(id, /^self-test-brand/);
+    assert.equal(listBrands()[0], 'fossefall', 'the first brand stays the default');
+    const d = designData(id);
+    assert.equal(d.todo.length, 5);
+    assert.ok(fs.existsSync(path.join(ROOT, 'public', d.assetBase, d.fonts[0].file)));
+    assert.throws(() => newBrandSchema.parse({ name: '<script>' }));
+    assert.throws(() => newBrandSchema.parse({ name: '   ' }));
+  } finally {
+    fs.rmSync(path.join(ROOT, 'brands', id), { recursive: true, force: true });
+    fs.rmSync(path.join(ROOT, 'public', 'brands', id), { recursive: true, force: true });
+  }
 });
 
 console.log(`\n${passed} checks passed`);

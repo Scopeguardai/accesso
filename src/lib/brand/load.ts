@@ -79,11 +79,22 @@ export function clearBrandCache(brandId: string) {
   cache.delete(brandId);
 }
 
+/** Brand ids, oldest first, so adding a brand never changes which one opens by default. */
 export function listBrands(): string[] {
   return fs
     .readdirSync(BRANDS_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory() && fs.existsSync(path.join(BRANDS_DIR, d.name, 'brand.json')))
-    .map((d) => d.name);
+    .map((d) => {
+      let created = '';
+      try {
+        created = String(JSON.parse(fs.readFileSync(path.join(BRANDS_DIR, d.name, 'brand.json'), 'utf8')).created ?? '');
+      } catch {
+        // An unreadable pack sorts first and fails loudly when it is loaded.
+      }
+      return { id: d.name, created };
+    })
+    .sort((a, b) => a.created.localeCompare(b.created) || a.id.localeCompare(b.id))
+    .map((b) => b.id);
 }
 
 export function paletteFor(brand: Brand, name: string | undefined): Palette {

@@ -93,6 +93,7 @@ export default function Workspace({
   knowledge,
   entry,
   designs,
+  brandId: openBrand,
   renderedAt,
 }: {
   brands: BrandOption[];
@@ -105,6 +106,8 @@ export default function Workspace({
   entry?: string;
   /** Each brand's design system, for the design view. */
   designs?: DesignData[];
+  /** The brand to open, when the page asks for one. */
+  brandId?: string;
   /** When the server rendered the page, so the first browser render matches it. */
   renderedAt: number;
 }) {
@@ -112,7 +115,7 @@ export default function Workspace({
   const deckId = initialDeck?.id ?? null;
   const [decks, setDecks] = useState(initialDecks);
   const [deck, setDeck] = useState(initialDeck);
-  const [brandId, setBrandId] = useState(initialDeck?.brand ?? entry?.split('/')[0] ?? brands[0]?.id ?? '');
+  const [brandId, setBrandId] = useState(initialDeck?.brand ?? openBrand ?? entry?.split('/')[0] ?? brands[0]?.id ?? '');
   const [inView, setInView] = useState<string | null>(initialDeck?.slides[0]?.id ?? null);
   const [history, setHistory] = useState(false);
   const [mode, setMode] = useState<PreviewMode>('desktop');
@@ -407,7 +410,7 @@ export default function Workspace({
             {(() => {
               const design = designs?.find((d) => d.id === brand.id);
               return design ? (
-                <DesignView key={brand.id} design={design} />
+                <DesignView key={brand.id} design={design} brands={brands.map((b) => ({ id: b.id, name: b.name }))} />
               ) : (
                 <p className="ws-empty">This brand has no design system yet.</p>
               );

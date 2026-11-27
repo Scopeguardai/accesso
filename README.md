@@ -29,6 +29,8 @@ First brand: **Fossefall**.
   brand rules and example briefs. Colours and text are edited on the page and saved together;
   logo, font and image files are uploaded or removed one at a time. Uploaded logos are
   rebuilt from safe drawing parts only, and fonts and images are checked by their contents.
+  "New brand" creates another brand with a placeholder logo, starter colours, fonts and rules,
+  and the page lists what still needs the brand's own material.
 
 The same layout works on phones, where the deck is shown at phone size.
 

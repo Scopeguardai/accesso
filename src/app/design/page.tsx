@@ -8,16 +8,20 @@ import { brandOptions } from '@/lib/workspace';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Design system · Accesso' };
 
-export default function DesignPage() {
+export default async function DesignPage({ searchParams }: { searchParams: Promise<{ brand?: string }> }) {
+  const { brand } = await searchParams;
+  const ids = listBrands();
+  const brandId = brand && ids.includes(brand) ? brand : ids[0];
   return (
     <Workspace
       renderedAt={Date.now()}
-      key="design"
+      key={`design-${brandId}`}
       view="design"
+      brandId={brandId}
       brands={brandOptions()}
       decks={listDecks().map(summarize)}
       deck={null}
-      designs={listBrands().map(designData)}
+      designs={ids.map(designData)}
     />
   );
 }
