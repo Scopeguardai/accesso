@@ -74,6 +74,11 @@ export function loadBrand(brandId: string): Brand {
   return brand;
 }
 
+/** Forget a brand's cached copy, so the next load reads its files again. */
+export function clearBrandCache(brandId: string) {
+  cache.delete(brandId);
+}
+
 export function listBrands(): string[] {
   return fs
     .readdirSync(BRANDS_DIR, { withFileTypes: true })

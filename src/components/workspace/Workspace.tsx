@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { DesignData } from '@/lib/brand/design';
 import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
@@ -11,6 +12,7 @@ import FossefallLogo from './FossefallLogo';
 import { ClockProvider } from './clock';
 import Composer from './Composer';
 import { copyText } from './copy';
+import DesignView from './DesignView';
 import Gallery from './Gallery';
 import KnowledgeView from './KnowledgeView';
 import NewDeck from './NewDeck';
@@ -18,7 +20,17 @@ import Preview, { type PreviewMode } from './Preview';
 import SettingsMenu from './SettingsMenu';
 import Switcher from './Switcher';
 import Thread from './Thread';
-import { IconBook, IconCheck, IconClose, IconDesktop, IconExternal, IconHistory, IconLink, IconPhone } from './icons';
+import {
+  IconBook,
+  IconCheck,
+  IconClose,
+  IconDesktop,
+  IconExternal,
+  IconHistory,
+  IconLink,
+  IconPalette,
+  IconPhone,
+} from './icons';
 import './workspace.css';
 import './shell.css';
 
@@ -70,8 +82,8 @@ function statusLine(deck: Deck): { text: string; tone: 'working' | 'error' | 'do
 /**
  * The app shell. A presentation fills the screen with a prompt bar under it;
  * the conversation with the agent is a History panel that slides in from the
- * right. The home page is the brief plus a gallery, and the knowledge base
- * is a list beside the open entry.
+ * right. The home page is the brief plus a gallery, the knowledge base is a
+ * list beside the open entry, and the design system is one scrolling page.
  */
 export default function Workspace({
   brands,
@@ -80,16 +92,19 @@ export default function Workspace({
   view,
   knowledge,
   entry,
+  designs,
   renderedAt,
 }: {
   brands: BrandOption[];
   decks: DeckSummary[];
   deck: Deck | null;
-  /** Show the knowledge base instead of a presentation. */
-  view?: 'knowledge';
+  /** Show the knowledge base or the design system instead of a presentation. */
+  view?: 'knowledge' | 'design';
   /** The knowledge entries for the knowledge view, and the one to open first. */
   knowledge?: KnowledgeSummary[];
   entry?: string;
+  /** Each brand's design system, for the design view. */
+  designs?: DesignData[];
   /** When the server rendered the page, so the first browser render matches it. */
   renderedAt: number;
 }) {
@@ -108,7 +123,7 @@ export default function Workspace({
   const frameRef = useRef<HTMLIFrameElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const brand = brands.find((b) => b.id === brandId) ?? brands[0];
-  const section = view === 'knowledge' ? 'knowledge' : initialDeck ? 'deck' : 'new';
+  const section = view ?? (initialDeck ? 'deck' : 'new');
   const working = deck?.status === 'generating';
   const busy = working || sending;
 
@@ -294,6 +309,7 @@ export default function Workspace({
                   <span className="top-count">{kbCount === 1 ? '1 entry' : `${kbCount} entries`}</span>
                 </span>
               )}
+              {section === 'design' && <span className="top-page">Design system</span>}
               <span className="grow" />
             </>
           )}
@@ -360,31 +376,44 @@ export default function Workspace({
             </>
           )}
 
-          {section !== 'deck' && (
-            <Link
-              href={section === 'knowledge' ? '/' : '/knowledge'}
-              className="btn-quiet top-wide"
-              title={section === 'knowledge' ? 'Back to presentations' : 'What the agent knows'}
-            >
-              {section === 'knowledge' ? (
-                'Presentations'
-              ) : (
-                <>
-                  <IconBook />
-                  Knowledge base
-                </>
-              )}
+          {(section === 'knowledge' || section === 'design') && (
+            <Link href="/" className="btn-quiet top-wide" title="Back to presentations">
+              Presentations
             </Link>
           )}
           {section === 'new' && (
-            <Link href="/knowledge" className="icon-btn top-narrow" aria-label="Knowledge base" title="Knowledge base">
-              <IconBook />
-            </Link>
+            <>
+              <Link href="/design" className="btn-quiet top-wide" title="The brand the agent designs with">
+                <IconPalette />
+                Design system
+              </Link>
+              <Link href="/knowledge" className="btn-quiet top-wide" title="What the agent knows">
+                <IconBook />
+                Knowledge base
+              </Link>
+              <Link href="/design" className="icon-btn top-narrow" aria-label="Design system" title="Design system">
+                <IconPalette />
+              </Link>
+              <Link href="/knowledge" className="icon-btn top-narrow" aria-label="Knowledge base" title="Knowledge base">
+                <IconBook />
+              </Link>
+            </>
           )}
           <SettingsMenu brands={brands} brandId={brandId} onBrand={setBrandId} brandLocked={section === 'deck'} />
         </header>
 
-        {section === 'knowledge' && brand ? (
+        {section === 'design' && brand ? (
+          <div className="cv-design">
+            {(() => {
+              const design = designs?.find((d) => d.id === brand.id);
+              return design ? (
+                <DesignView key={brand.id} design={design} />
+              ) : (
+                <p className="ws-empty">This brand has no design system yet.</p>
+              );
+            })()}
+          </div>
+        ) : section === 'knowledge' && brand ? (
           <div className="cv-kb">
             <KnowledgeView
               key={brand.id}
