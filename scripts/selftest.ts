@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createDeckTools } from '../src/lib/agent/deck-tools';
 import { systemPrompt } from '../src/lib/agent/prompt';
+import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand/assets';
 import { imageFor, loadBrand } from '../src/lib/brand/load';
 import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
@@ -171,6 +172,44 @@ check('knowledge entries can be added, changed and deleted, and only inside thei
   }
   assert.ok(fs.existsSync(path.join(KNOWLEDGE_DIR, 'fossefall', 'positioning.md')), 'real entries untouched');
   assert.ok(entryUsage('fossefall', 'fossefall/platform-strategy.md').some((u) => u.id === 'sample-fossefall'));
+});
+
+check('uploaded logos keep their drawing and lose anything that could run code', () => {
+  const clean = sanitizeSvg(brand.svg.wordmark, 'Fossefall');
+  assert.match(clean, /^<svg [^>]*viewBox="[^"]+"/);
+  assert.match(clean, /fill="currentColor"/);
+  assert.ok((clean.match(/<path/g) ?? []).length >= 1);
+
+  const nasty = `<?xml version="1.0"?><!DOCTYPE svg><svg xmlns="http://www.w3.org/2000/svg" width="40" height="20" onload="alert(1)">
+    <metadata><x>secret</x></metadata>
+    <style>.st0{fill:#123456} body{background:url(https://evil.test/x)}</style>
+    <script>alert(1)</script><script/>
+    <foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><img src=x onerror=alert(1)></div></foreignObject>
+    <a href="javascript:alert(1)"><path d="M0 0h1"/></a>
+    <image href="https://evil.test/i.png"/>
+    <use href="https://evil.test/s.svg#a"/><use xlink:href="#ok"/>
+    <path class="st0" d="M0 0h10v10z" style="fill:url(https://evil.test)" onclick="x()"/>
+    <rect fill="url(https://evil.test/#g)" width="5" height="5"/><rect fill="url(#g)" width="5" height="5"/>
+    <animate attributeName="href" to="javascript:alert(1)"/>
+    <title>Logo &amp; <b>name</b></title>
+  </svg>`;
+  const out = sanitizeSvg(nasty, 'A "brand"');
+  for (const bad of ['script', 'onload', 'onclick', 'onerror', 'javascript', 'evil.test', 'foreignObject', 'metadata', 'secret', '<image', '<a ', 'animate', 'style=', 'DOCTYPE', '<?xml']) {
+    assert.ok(!out.includes(bad), `left ${bad} in ${out}`);
+  }
+  assert.match(out, /viewBox="0 0 40 20"/);
+  assert.match(out, /<path d="M0 0h10v10z" fill="#123456"\/>/, 'class colour kept as fill');
+  assert.match(out, /<use xlink:href="#ok"\/>/);
+  assert.match(out, /<rect fill="url\(#g\)"/);
+  assert.match(out, /aria-label="A &quot;brand&quot;"/);
+  assert.throws(() => sanitizeSvg('<html><body>no</body></html>', 'x'), AssetError);
+  assert.throws(() => sanitizeSvg('<svg viewBox="0 0 1 1"><script>x</script></svg>', 'x'), AssetError);
+
+  assert.equal(fontFormat(fs.readFileSync(path.join(ROOT, 'public', brand.assetBase, brand.fonts.sans.file))), 'truetype');
+  assert.equal(fontFormat(Buffer.from('<html>')), null);
+  const jpg = imageInfo(fs.readFileSync(path.join(ROOT, 'public', brand.assetBase, brand.images[0].file)));
+  assert.ok(jpg && jpg.width > 0 && jpg.height > 0, 'reads a JPEG size');
+  assert.equal(imageInfo(Buffer.from('GIF89a')), null);
 });
 
 console.log(`\n${passed} checks passed`);

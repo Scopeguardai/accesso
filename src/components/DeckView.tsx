@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { cssFontFormat } from '@/lib/brand/assets';
 import { imageFor, paletteFor, type Brand } from '@/lib/brand/load';
 import { DEFAULT_THEME, type Deck, type ImageRef, type Slide } from '@/lib/deck/schema';
 import DeckNav from './DeckNav';
@@ -13,7 +14,7 @@ type Ctx = { brand: Brand; index: number };
 
 function Img({ image, ctx, className }: { image: ImageRef; ctx: Ctx; className?: string }) {
   const asset = imageFor(ctx.brand, image.asset);
-  if (!asset) return <div className={`img-missing ${className ?? ''}`}>{image.asset}</div>;
+  if (!asset) return <div className={`img-missing ${className ?? ''}`}>Image removed from the library</div>;
   return (
     <img
       className={className}
@@ -292,7 +293,7 @@ function SlideView({ slide, brand, index }: { slide: Slide; brand: Brand; index:
 export default function DeckView({ deck, brand }: { deck: Deck; brand: Brand }) {
   const p = paletteFor(brand, deck.palette);
   const font = (f: Brand['fonts']['sans']) =>
-    `@font-face{font-family:"${f.family}";src:url("${brand.assetBase}/${f.file}") format("truetype");font-weight:${f.weight};font-display:swap}`;
+    `@font-face{font-family:"${f.family}";src:url("${brand.assetBase}/${f.file}") format("${cssFontFormat(f.file)}");font-weight:${f.weight};font-display:swap}`;
   const vars = {
     '--sans': `"${brand.fonts.sans.family}", system-ui, sans-serif`,
     '--mono': `"${brand.fonts.mono.family}", ui-monospace, monospace`,

@@ -25,6 +25,10 @@ First brand: **Fossefall**.
   does, read and edit entries, mark them draft or verified, add new ones by typing or
   uploading a `.md` or `.txt` file, and see which presentations cite each entry.
   Sources the agent read link straight to their entry.
+- **Design system.** The brand the agent designs with: logo, colour palettes, fonts, images,
+  brand rules and example briefs. Colours and text are edited on the page and saved together;
+  logo, font and image files are uploaded or removed one at a time. Uploaded logos are
+  rebuilt from safe drawing parts only, and fonts and images are checked by their contents.
 
 The same layout works on phones, where the deck is shown at phone size.
 
@@ -81,7 +85,7 @@ data/decks/            one JSON file per deck, including its conversation
 src/lib/deck/          the deck format (schema.ts) and file store
 src/lib/agent/         the agent: its tools, prompts and the Claude Agent SDK run loop
 src/components/        the deck renderer (DeckView.tsx, deck.css)
-src/components/workspace/  the app screens (shell, history, knowledge base)
+src/components/workspace/  the app screens (shell, history, knowledge base, design system)
 src/app/               pages and API routes
 ```
 
