@@ -19,9 +19,7 @@ export default function Gallery({ decks, brands }: { decks: DeckSummary[]; brand
   const sorted = [...decks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   return (
     <section className="gal" aria-label="Your presentations">
-      <h2 className="new-h2">
-        Your presentations <span className="new-h2-count">{decks.length}</span>
-      </h2>
+      <h2 className="new-h2">Your presentations</h2>
       <ul>
         {sorted.map((d) => {
           const brand = brands.find((b) => b.id === d.brand);
@@ -38,20 +36,16 @@ export default function Gallery({ decks, brands }: { decks: DeckSummary[]; brand
                 </span>
                 <span className="gal-title">{d.title}</span>
                 <span className="gal-meta">
-                  {d.status === 'ready' ? (
-                    <span>{d.slideCount === 1 ? '1 slide' : `${d.slideCount} slides`}</span>
-                  ) : (
-                    <span className="gal-status" data-status={d.status}>
-                      <span className="dot" data-status={d.status} aria-hidden="true" />
-                      {STATUS_LABEL[d.status]}
-                    </span>
-                  )}
-                  <span>
-                    Edited{' '}
-                    <time dateTime={d.updatedAt} suppressHydrationWarning>
-                      {ago(d.updatedAt, clock.now, clock.local)}
-                    </time>
-                  </span>
+                  <span className="dot" data-status={d.status} aria-hidden="true" />
+                  {d.status === 'ready'
+                    ? d.slideCount === 1
+                      ? '1 slide'
+                      : `${d.slideCount} slides`
+                    : STATUS_LABEL[d.status]}
+                  <span aria-hidden="true">·</span>
+                  <time dateTime={d.updatedAt} suppressHydrationWarning>
+                    {ago(d.updatedAt, clock.now, clock.local)}
+                  </time>
                 </span>
               </Link>
             </li>

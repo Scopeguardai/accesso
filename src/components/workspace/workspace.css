@@ -803,6 +803,10 @@ input.bar-title:focus {
   flex: none;
 }
 
+.ws .label-short {
+  display: none;
+}
+
 .send {
   display: grid;
   place-items: center;
@@ -872,7 +876,7 @@ input.bar-title:focus {
 }
 
 .composer-new textarea {
-  min-height: 4.75rem;
+  min-height: 6rem;
   padding-top: 1rem;
   font-size: 1rem;
 }
@@ -882,165 +886,31 @@ input.bar-title:focus {
   bottom: auto;
 }
 
-.new-context {
-  margin-top: 0.6rem;
-  color: var(--mut);
-  font-size: 0.875rem;
-  text-align: center;
-}
-
-.new-context a {
-  color: var(--ink-2);
-  text-decoration: underline;
-  text-decoration-color: var(--line-2);
-  text-underline-offset: 3px;
-}
-
-.new-context a:hover {
-  text-decoration-color: currentColor;
-}
-
-/* audience, goal and tone: optional lines inside the brief box */
-.brief-fields {
+.brief-more {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-}
-
-.brief-fields-tone {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.brief-field {
-  display: flex;
-  align-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.6rem;
-  min-width: 0;
-  height: 2.6rem;
-  padding: 0 1rem;
-}
-
-.brief-field + .brief-field {
-  border-left: 1px solid var(--line);
-}
-
-.brief-field:focus-within {
-  background: var(--soft);
-}
-
-.brief-field span {
-  flex: none;
-  color: var(--mut);
-  font-size: 0.8125rem;
-}
-
-.brief-field:focus-within span {
-  color: var(--ink);
-}
-
-.brief-field input {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 0.875rem;
-  outline: none;
-}
-
-.ws .brief-field input:focus-visible {
-  outline: none;
-}
-
-.brief-field input::placeholder {
-  color: #8d938f;
-}
-
-.composer-new .composer-row {
+  padding: 0.6rem 0.75rem 0.85rem;
   border-top: 1px solid var(--line);
-  padding-top: 0.5rem;
 }
 
-/* slide count: minus and plus around the number */
-.ws .stepper {
-  gap: 0.1rem;
-  padding: 0 0.2rem;
-  cursor: default;
-}
-
-.ws .stepper button {
+.brief-more label {
   display: grid;
-  place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  border: 0;
-  border-radius: 0.4rem;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.ws .stepper button:hover:not(:disabled) {
-  background: var(--soft);
-}
-
-.ws .stepper button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.ws .stepper output {
-  padding: 0 0.15rem;
-  color: var(--mut);
-  white-space: nowrap;
-}
-
-.ws .stepper output b {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.create {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.create-hint {
-  color: var(--mut);
+  gap: 0.25rem;
   font-size: 0.75rem;
+  color: var(--mut);
 }
 
-.create-btn {
+.brief-more input {
+  width: 100%;
+  min-width: 0;
   height: 2.1rem;
-  padding: 0 1rem;
-  border: 0;
-  border-radius: 0.6rem;
-  background: var(--ink);
-  color: #fff;
+  padding: 0 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--bg);
   font-size: 0.875rem;
-  font-weight: 550;
-  cursor: pointer;
-}
-
-.create-btn:hover {
-  background: #363b38;
-}
-
-.create-btn[aria-busy='true'] {
-  opacity: 0.7;
-  cursor: progress;
-}
-
-.brief-nudge {
-  margin-top: 0.55rem;
-  padding-left: 0.25rem;
-  color: var(--amber);
-  font-size: 0.8125rem;
+  color: var(--ink);
 }
 
 .new-h2 {
@@ -1058,9 +928,6 @@ input.bar-title:focus {
 }
 
 .starters button {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
   width: 100%;
   padding: 0.65rem 0;
   border: 0;
@@ -1079,31 +946,6 @@ input.bar-title:focus {
 
 .starters button:hover {
   color: var(--ink);
-}
-
-.starter-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.starter-use {
-  flex: none;
-  color: var(--ink);
-  font-size: 0.8125rem;
-  font-weight: 550;
-  opacity: 0;
-  transition: opacity 0.12s ease;
-}
-
-.starters button:hover .starter-use,
-.starters button:focus-visible .starter-use {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  .starter-use {
-    opacity: 1;
-  }
 }
 
 .kb {
@@ -1710,6 +1552,10 @@ input.bar-title:focus {
     display: none;
   }
 
+  .brief-more {
+    grid-template-columns: 1fr;
+  }
+
   .new {
     align-items: start;
     padding: 1.75rem var(--gutter) 2.5rem;
@@ -1719,29 +1565,12 @@ input.bar-title:focus {
     font-size: 1.55rem;
   }
 
-  .brief-fields {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .brief-field + .brief-field {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-
-  .create-hint {
+  .ws .label-long {
     display: none;
   }
 
-  .composer-new .composer-row {
-    flex-wrap: wrap;
-  }
-
-  .composer-new .create {
-    width: 100%;
-  }
-
-  .composer-new .create-btn {
-    flex: 1;
+  .ws .label-short {
+    display: inline;
   }
 
   .ws .picker .chip-label {
