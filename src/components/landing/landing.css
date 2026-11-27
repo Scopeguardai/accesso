@@ -1,0 +1,321 @@
+/* The front page and the sign-in page. Colours and buttons come from workspace.css. */
+
+.ws.lp {
+  display: block;
+  overflow-y: auto;
+}
+
+.lp .lp-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--bar-h);
+  padding: 0 clamp(1rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp .lp-logo {
+  display: flex;
+  color: #000;
+}
+
+.lp .lp-logo svg {
+  display: block;
+  width: auto;
+  height: 1.125rem;
+}
+
+.lp .lp-main {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 2.5rem) 5rem;
+}
+
+.lp h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.lp h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.lp .lp-sub {
+  max-width: 38rem;
+  margin-top: 0.75rem;
+  color: var(--ink-2);
+}
+
+/* the three ways */
+.lp .lp-ways {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.lp .lp-way {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  padding: 1rem 1.1rem 1.15rem;
+  border: 1px solid var(--line-2);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lp .lp-way b {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.lp .lp-way span {
+  color: var(--mut);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.lp .lp-way:hover {
+  border-color: var(--mut);
+}
+
+.lp .lp-way[aria-checked='true'] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+  background: var(--soft);
+}
+
+.lp .lp-way[aria-checked='true'] span {
+  color: var(--ink-2);
+}
+
+/* the form under them */
+.lp .lp-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 34rem;
+  margin-top: 1.5rem;
+}
+
+.lp .lp-field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.lp input:not([type='file']) {
+  width: 100%;
+  min-width: 0;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line-2);
+  border-radius: 0.5rem;
+  background: var(--bg);
+  font-size: 0.9375rem;
+  font-weight: 400;
+}
+
+.lp input:not([type='file']):focus {
+  border-color: var(--ink);
+  outline: none;
+}
+
+.lp input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.lp .lp-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+
+.lp .lp-source input:not([type='file']) {
+  flex: 1 1 12rem;
+  width: auto;
+}
+
+.lp .lp-file {
+  position: relative;
+  height: 2.5rem;
+  cursor: pointer;
+}
+
+.lp .lp-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.lp .lp-file:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.lp .lp-or,
+.lp .lp-hint,
+.lp .lp-tag,
+.lp .lp-state {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.lp .lp-chosen {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.lp .lp-chosen button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mut);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lp .lp-error {
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+.lp .lp-go {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+}
+
+.lp .lp-go .btn-ink,
+.lp .lp-wide {
+  height: 2.5rem;
+  padding: 0 1.1rem;
+  font-size: 0.9375rem;
+}
+
+.lp .lp-go .lp-hint {
+  flex: 1 1 14rem;
+}
+
+.lp .btn-ink:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* brands */
+.lp .lp-brands {
+  margin-top: clamp(2.5rem, 7vw, 4.5rem);
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.lp .lp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.lp .lp-brand {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+
+.lp .lp-brand-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 2rem;
+}
+
+.lp .lp-word {
+  display: flex;
+  min-width: 0;
+  height: 1.25rem;
+}
+
+.lp .lp-word svg {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+}
+
+.lp .lp-dots {
+  display: inline-flex;
+  flex: none;
+}
+
+.lp .lp-dots i {
+  width: 1rem;
+  height: 1rem;
+  margin-left: -0.25rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--bg), inset 0 0 0 1px rgb(28 31 29 / 0.12);
+}
+
+.lp .lp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lp a.btn-ink {
+  text-decoration: none;
+}
+
+/* sign-in */
+.ws.lp.lp-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--side);
+}
+
+.lp .lp-login-card {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 23rem);
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--bg);
+}
+
+.lp .lp-login-card h1 {
+  margin-top: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.lp .lp-login-card .lp-sub {
+  margin-top: -0.5rem;
+  font-size: 0.875rem;
+}
+
+.lp .lp-wide {
+  justify-content: center;
+  width: 100%;
+}
+
+@media (max-width: 46rem) {
+  .lp .lp-ways {
+    grid-template-columns: 1fr;
+  }
+}

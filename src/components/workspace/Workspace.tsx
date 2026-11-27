@@ -291,7 +291,7 @@ export default function Workspace({
     <ClockProvider renderedAt={renderedAt}>
       <div className="ws cv" data-view={section} data-pane={section === 'knowledge' ? pane : undefined}>
         <header className="top">
-          <Link href="/" className="top-home" aria-label="Home" title="Home">
+          <Link href="/" className="top-home" aria-label="All brands" title="All brands">
             {section === 'new' ? <FossefallLogo /> : <FossefallLogo variant="mark" />}
           </Link>
 
@@ -380,7 +380,7 @@ export default function Workspace({
           )}
 
           {(section === 'knowledge' || section === 'design') && (
-            <Link href="/" className="btn-quiet top-wide" title="Back to presentations">
+            <Link href={`/new?brand=${encodeURIComponent(brandId)}`} className="btn-quiet top-wide" title="Back to presentations">
               Presentations
             </Link>
           )}

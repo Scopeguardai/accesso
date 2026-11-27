@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createDeckTools } from '../src/lib/agent/deck-tools';
 import { systemPrompt } from '../src/lib/agent/prompt';
+import { passwordMatches, passwordSet, safeNext, sessionToken, validSession } from '../src/lib/auth';
 import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand/assets';
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
 import { designData } from '../src/lib/brand/design';
@@ -229,6 +230,26 @@ check('a new brand starts with working starter assets and a list of what to add'
   } finally {
     fs.rmSync(path.join(ROOT, 'brands', id), { recursive: true, force: true });
     fs.rmSync(path.join(ROOT, 'public', 'brands', id), { recursive: true, force: true });
+  }
+});
+
+check('the team password guards sign-in, and a changed password signs everyone out', () => {
+  const before = process.env.ACCESSO_PASSWORD;
+  try {
+    delete process.env.ACCESSO_PASSWORD;
+    assert.equal(passwordSet(), false);
+    assert.equal(validSession(sessionToken()), false, 'no password, no sessions');
+    process.env.ACCESSO_PASSWORD = 'first-test-value';
+    const token = sessionToken();
+    assert.ok(passwordMatches('first-test-value') && !passwordMatches('first-test-valu') && !passwordMatches(''));
+    assert.ok(validSession(token) && !validSession('x') && !validSession(undefined));
+    process.env.ACCESSO_PASSWORD = 'second-test-value';
+    assert.equal(validSession(token), false);
+    assert.equal(safeNext('/design?brand=fossefall'), '/design?brand=fossefall');
+    for (const bad of ['//evil.com', 'https://evil.com', '/\\evil.com', '/login', null]) assert.equal(safeNext(bad), '/');
+  } finally {
+    if (before === undefined) delete process.env.ACCESSO_PASSWORD;
+    else process.env.ACCESSO_PASSWORD = before;
   }
 });
 

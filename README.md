@@ -7,14 +7,20 @@ First brand: **Fossefall**.
 
 ## What works today
 
-- **Home.** Describe a presentation in your own words, with parameters for slide
+- **Front page** (`/`). Set up a brand in one of three ways: add the assets yourself, upload
+  brand guidelines, or use the brand's website. Underneath, every brand with what is left to
+  add and buttons to make a presentation or open its design system.
+- **Sign-in.** Set `ACCESSO_PASSWORD` in `.env.local` and every page and API needs that one
+  team password; the cookie lasts 30 days and changing the password signs everyone out.
+  Wrong guesses are limited to eight per ten minutes. With no password set the app is open.
+- **Make a presentation** (`/new`). Describe a presentation in your own words, with parameters for slide
   count, palette, audience, goal and tone, or start from one of the brand's example
   briefs. Your presentations are listed underneath as tiles.
 - **Presentation.** The deck fills the screen and updates as the agent works. Under it
   are the list of slides and a prompt bar: ask for a change to the whole deck or only
   the slide in view, or switch palette at once. One line above the prompt bar says what
   the agent is doing or last did.
-- **Top bar.** The logo goes home. The arrow beside the title switches presentation,
+- **Top bar.** The logo goes to the front page. The arrow beside the title switches presentation,
   starts a new one or opens the knowledge base; the title can be renamed in place. On
   the right: desktop or phone size, History, Share (copies the link), open in a new tab,
   and the profile menu (your name and the brand).

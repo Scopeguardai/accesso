@@ -49,7 +49,7 @@ export default function Switcher({ decks, activeId }: { decks: DeckSummary[]; ac
       </button>
       {open && (
         <nav className="switch-menu" aria-label="Presentations">
-          <Link href="/" className="switch-row">
+          <Link href="/new" className="switch-row">
             <IconPlus />
             New presentation
           </Link>
