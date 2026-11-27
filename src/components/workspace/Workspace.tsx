@@ -7,7 +7,7 @@ import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
 import type { BrandOption } from '@/lib/workspace';
-import AccessoLogo from './AccessoLogo';
+import FossefallLogo from './FossefallLogo';
 import { ClockProvider } from './clock';
 import Composer from './Composer';
 import { copyText } from './copy';
@@ -273,8 +273,8 @@ export default function Workspace({
     <ClockProvider renderedAt={renderedAt}>
       <div className="ws cv" data-view={section} data-pane={section === 'knowledge' ? pane : undefined}>
         <header className="top">
-          <Link href="/" className="top-home" aria-label="Accesso home" title="Home">
-            {section === 'new' ? <AccessoLogo /> : <AccessoLogo variant="mark" />}
+          <Link href="/" className="top-home" aria-label="Home" title="Home">
+            {section === 'new' ? <FossefallLogo /> : <FossefallLogo variant="mark" />}
           </Link>
 
           {deck ? (
