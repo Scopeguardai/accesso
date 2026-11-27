@@ -11,7 +11,7 @@ import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
 import { designData } from '../src/lib/brand/design';
 import { proposalSchema, readImport } from '../src/lib/brand/import';
-import { checkPublicUrl, htmlToText, pdfText, SourceError } from '../src/lib/brand/import-source';
+import { checkPublicUrl, cssColours, htmlToText, pdfText, siteFromHtml, SourceError } from '../src/lib/brand/import-source';
 import { imageFor, listBrands, loadBrand } from '../src/lib/brand/load';
 import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
@@ -247,8 +247,24 @@ void (async () => {
   assert.throws(() => proposalSchema.parse({ ...good, palettes: [{ label: '<b>', where: '', colours }] }));
   assert.throws(() => proposalSchema.parse({ ...good, palettes: [{ label: 'x', where: '', colours: { ...colours, dark: 'red' } }] }));
   assert.equal(readImport('no-such-brand').status, 'none');
+
+  // A website read as an identity guide: colours and fonts from its styling, a safe logo, no scripts.
+  assert.deepEqual(cssColours('#fff rgba(0,0,0,.1) rgb(11 61 46) hsl(0, 100%, 50%) #0b3d2e80'), ['#FFFFFF', '#0B3D2E', '#0B3D2E', '#FF0000']);
+  const site = await siteFromHtml(
+    'https://northwind.example/',
+    `<title>Northwind &ndash; Calm</title><style>:root{--brand:#0B3D2E}body{font-family:"Sohne",sans-serif;background:#FAF7F0}
+     h1{font-family:Fraunces,serif}code{font:500 12px/1.4 "IBM Plex Mono",monospace}</style>
+     <header><a href="/"><svg viewBox="0 0 120 24" onload="x()"><script>x()</script><path d="M2 2h20v20H2z M30 4h8l6 12V4h6v16h-8l-6-12v12h-6z M60 4h18v4H66v2h10v4H66v6h-6z M84 4h6v12h10v4H84z"/></svg></a></header>
+     <h1>Calm logistics</h1><p>${'Freight that arrives when we say it will. '.repeat(8)}</p><script>var c = "#FF00FF"</script>`,
+  );
+  assert.equal(site.kind, 'site');
+  for (const part of ['Northwind - Calm', '--brand: #0B3D2E', '#FAF7F0 used 1 times, 1 as a background', 'Fraunces used 1 times, on headings', 'IBM Plex Mono', 'Sohne']) {
+    assert.ok(site.text.includes(part), part);
+  }
+  assert.ok(!site.text.includes('#FF00FF'), 'colours inside scripts are not styling');
+  assert.ok(site.logo && site.logo.svg.includes('M30 4h8') && !/script|onload/.test(site.logo.svg), 'the logo is found and made safe');
   passed += 1;
-  console.log('ok  guidelines are read only from real PDFs and public links, and proposals are checked');
+  console.log('ok  guidelines and websites are read only from real PDFs and public links, and proposals are checked');
   console.log(`\n${passed} checks passed`);
 })().catch((err) => {
   console.error(err);

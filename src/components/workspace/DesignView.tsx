@@ -208,6 +208,13 @@ export default function DesignView({
     }
   }
 
+  /** Use the logo found on the website. It goes through the same checks as an uploaded logo. */
+  function takeFoundLogo(which: 'wordmark' | 'mark') {
+    if (imp.status !== 'ready' || !imp.logo) return;
+    const file = new File([imp.logo.svg], 'logo-from-website.svg', { type: 'image/svg+xml' });
+    upload(which, which === 'wordmark' ? 'Wordmark replaced.' : 'Symbol replaced.', { kind: which, file });
+  }
+
   /** Put the proposal into the page as unsaved changes, for a person to check and save. */
   function applyImport() {
     if (imp.status !== 'ready') return;
@@ -542,9 +549,10 @@ export default function DesignView({
         )}
 
         <section id="ds-import" className="ds-sec">
-          <h2>Fill in from brand guidelines</h2>
+          <h2>Fill in from brand guidelines or a website</h2>
           <p className="ds-lede">
-            Upload the guidelines as a PDF, or paste a link to them. The agent reads them and proposes the colours,
+            Upload the guidelines as a PDF, or paste a link to them. With no guidelines, paste the brand&rsquo;s
+            website and the agent works the identity out from how the site looks. Either way it proposes the colours,
             fonts and brand rules for you to check. Nothing changes until you apply the proposal and save.
           </p>
           {imp.status === 'working' ? (
@@ -575,13 +583,23 @@ export default function DesignView({
                   setImpUrl(e.target.value);
                   setImpError('');
                 }}
-                placeholder="https://example.com/brand-guidelines.pdf"
-                aria-label="Link to the guidelines"
+                placeholder="Link to the guidelines, or the website"
+                aria-label="Link to the guidelines or the website"
                 inputMode="url"
               />
               <button type="submit" className="btn-quiet" disabled={busy === 'import'}>
                 Read link
               </button>
+              {saved.website && !impUrl.trim() && (
+                <button
+                  type="button"
+                  className="btn-quiet ds-imp-site"
+                  disabled={busy === 'import'}
+                  onClick={() => startImport({ url: saved.website })}
+                >
+                  Read {saved.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                </button>
+              )}
             </form>
           )}
           {(impError || imp.status === 'error') && (
@@ -592,8 +610,14 @@ export default function DesignView({
           {imp.status === 'ready' && (
             <article className="ds-prop" aria-label="Proposal from the guidelines">
               <p className="ds-prop-head">
-                <b>Proposed from {imp.source}</b>
+                <b>{imp.kind === 'site' ? 'Worked out from the website' : 'Proposed from'} {imp.source}</b>
               </p>
+              {imp.kind === 'site' && (
+                <p className="ds-prop-hint">
+                  A website shows how a brand looks but does not state its rules, so treat this as a first draft and
+                  check it against anything official.
+                </p>
+              )}
               <p>{imp.proposal.summary}</p>
               {imp.proposal.tagline && (
                 <p>
@@ -617,7 +641,7 @@ export default function DesignView({
               )}
               {(imp.proposal.fonts.headline || imp.proposal.fonts.detail) && (
                 <div>
-                  <p className="ds-prop-label">Fonts named in the guidelines</p>
+                  <p className="ds-prop-label">{imp.kind === 'site' ? 'Fonts the website uses' : 'Fonts named in the guidelines'}</p>
                   <ul className="ds-prop-list">
                     {imp.proposal.fonts.headline && (
                       <li>
@@ -631,8 +655,29 @@ export default function DesignView({
                     )}
                   </ul>
                   <p className="ds-prop-hint">
-                    Font files are not taken from guidelines. If these differ from the fonts below, upload the files
+                    Font files are not taken automatically. If these differ from the fonts below, upload the files
                     under Typography.
+                  </p>
+                </div>
+              )}
+              {imp.logo && (
+                <div>
+                  <p className="ds-prop-label">Logo found in {imp.logo.from}</p>
+                  <div className="ds-prop-logo">
+                    <span dangerouslySetInnerHTML={{ __html: imp.logo.svg }} />
+                    <span className="ds-prop-logo-dark" dangerouslySetInnerHTML={{ __html: imp.logo.svg }} />
+                  </div>
+                  <div className="ds-add-actions">
+                    <button type="button" className="btn-quiet" disabled={busy !== null} onClick={() => takeFoundLogo('wordmark')}>
+                      Use as the wordmark
+                    </button>
+                    <button type="button" className="btn-quiet" disabled={busy !== null} onClick={() => takeFoundLogo('mark')}>
+                      Use as the symbol
+                    </button>
+                  </div>
+                  <p className="ds-prop-hint">
+                    It is shown in one colour, as logos are in presentations. Using it replaces the current logo
+                    straight away. Only use it if you have the brand&rsquo;s permission.
                   </p>
                 </div>
               )}
@@ -649,7 +694,8 @@ export default function DesignView({
               <p className="ds-prop-hint">
                 Applying puts the tagline, {imp.proposal.palettes.length === 1 ? 'palette' : 'palettes'} and brand
                 rules into this page as unsaved changes, replacing the brand rules that are there. Check them, then
-                save. The logo and images are not taken from guidelines: add them below.
+                save. {imp.logo ? 'Images are not taken from the website' : 'The logo and images are not taken automatically'}:
+                add them below.
               </p>
               <div className="ds-add-actions">
                 <button type="button" className="btn-ink" onClick={applyImport} disabled={impApplied}>
