@@ -12,6 +12,7 @@ import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
 import { designData } from '../src/lib/brand/design';
 import { proposalSchema, readImport } from '../src/lib/brand/import';
+import { pdfGraphics } from '../src/lib/brand/pdf-graphics';
 import { checkPublicUrl, cssColours, htmlToText, pdfText, siteFromHtml, SourceError } from '../src/lib/brand/import-source';
 import { imageFor, listBrands, loadBrand } from '../src/lib/brand/load';
 import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
@@ -283,7 +284,20 @@ void (async () => {
     assert.ok(site.text.includes(part), part);
   }
   assert.ok(!site.text.includes('#FF00FF'), 'colours inside scripts are not styling');
-  assert.ok(site.logo && site.logo.svg.includes('M30 4h8') && !/script|onload/.test(site.logo.svg), 'the logo is found and made safe');
+  const siteLogo = site.logos?.[0];
+  assert.ok(siteLogo && siteLogo.svg.includes('M30 4h8') && !/script|onload/.test(siteLogo.svg), 'the logo is found and made safe');
+
+  // A vector PDF: the background and a colour swatch are ignored, shapes that sit together become one drawing.
+  const draw =
+    '1 1 0.9 rg 0 0 600 400 re f 0 0 0 rg ' +
+    '100 100 m 140 100 l 120 160 l h f 150 100 m 190 100 l 170 160 l h f ' + // two triangles side by side
+    '420 300 m 480 300 l 470 330 l 480 360 l 450 350 l 420 360 l 430 330 l h f ' + // a separate shape far away
+    '300 40 60 60 re f'; // a plain square: a swatch
+  const pdf = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 600 400]/Contents 4 0 R/Resources<<>>>>endobj\n4 0 obj<</Length ${draw.length}>>stream\n${draw}\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%EOF`;
+  const drawings = await pdfGraphics(new TextEncoder().encode(pdf));
+  assert.equal(drawings.length, 2, 'two drawings: the pair of triangles, and the separate shape');
+  assert.deepEqual(drawings.map((d) => (d.svg.match(/<path/g) ?? []).length).sort(), [1, 2]);
+  assert.ok(drawings.every((d) => d.from === 'page 1' && sanitizeSvg(d.svg, 'Logo').includes('<path')));
   passed += 1;
   console.log('ok  guidelines and websites are read only from real PDFs and public links, and proposals are checked');
   console.log(`\n${passed} checks passed`);

@@ -9,13 +9,15 @@ import { sanitizeSvg } from './assets';
 
 export class SourceError extends Error {}
 
+export type FoundLogo = { svg: string; from: string };
+
 export type SourceText = {
   label: string;
   kind: 'pdf' | 'site';
   text: string;
   pages?: number;
-  /** A logo found on the website, already made safe. Offered to the person, never applied by itself. */
-  logo?: { svg: string; from: string };
+  /** Logos found in the PDF or on the website, already made safe. Offered to the person, never applied by themselves. */
+  logos?: FoundLogo[];
 };
 
 const MAX_BYTES = 30_000_000;
@@ -43,7 +45,21 @@ export async function pdfText(bytes: Uint8Array, label: string): Promise<SourceT
       'That PDF has almost no text in it, so it is probably scanned images. Accesso can only read guidelines with real text.',
     );
   }
-  return { label, kind: 'pdf', text: clip(text), pages: pages.length };
+  // Drawn shapes that could be the logo. Finding none, or failing, never stops the reading.
+  let logos: FoundLogo[] = [];
+  try {
+    const { pdfGraphics } = await import('./pdf-graphics');
+    for (const g of await pdfGraphics(bytes)) {
+      try {
+        logos.push({ svg: sanitizeSvg(g.svg, 'Logo'), from: g.from });
+      } catch {
+        /* a drawing the safety check rejects is left out */
+      }
+    }
+  } catch {
+    logos = [];
+  }
+  return { label, kind: 'pdf', text: clip(text), pages: pages.length, logos };
 }
 
 function isPrivate(address: string): boolean {
@@ -252,7 +268,7 @@ const top = (map: Map<string, number>, n: number) =>
   [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
 
 /** Look for the brand's logo as an SVG: drawn into the page header, or linked as an .svg image. */
-async function findLogo(html: string, base: URL): Promise<SourceText['logo']> {
+async function findLogo(html: string, base: URL): Promise<FoundLogo | undefined> {
   const head = /<header\b[\s\S]*?<\/header>/i.exec(html)?.[0] ?? html.slice(0, 60_000);
   const tries: (() => Promise<{ svg: string; from: string } | null>)[] = [];
   for (const m of head.matchAll(/<a\b[^>]*>([\s\S]{0,6000}?)<\/a>/gi)) {
@@ -359,11 +375,12 @@ async function siteSource(url: URL, html: string): Promise<SourceText> {
     text,
   ].filter((l): l is string => l !== false && l !== undefined && (l === '' || l.length > 0));
 
+  const logo = await findLogo(html, url);
   return {
     label: url.hostname + (url.pathname.length > 1 ? url.pathname : ''),
     kind: 'site',
     text: clip(lines.join('\n')),
-    logo: await findLogo(html, url),
+    logos: logo ? [logo] : [],
   };
 }
 

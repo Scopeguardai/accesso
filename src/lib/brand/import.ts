@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { BRANDS_DIR, ROOT, safeId } from '../paths';
 import { sanitizeSvg } from './assets';
 import { COLOUR_ROLES, type ColourRole } from './design';
-import type { SourceText } from './import-source';
+import type { FoundLogo, SourceText } from './import-source';
 import { listBrands, loadBrand } from './load';
 
 /**
@@ -43,9 +43,9 @@ export type Proposal = z.infer<typeof proposalSchema>;
 
 export type ImportState =
   | { status: 'none' }
-  | { status: 'working'; source: string; startedAt: string }
-  | { status: 'error'; source: string; error: string }
-  | { status: 'ready'; source: string; kind?: 'pdf' | 'site'; finishedAt: string; proposal: Proposal; logo?: { svg: string; from: string } };
+  | { status: 'working'; source: string; startedAt: string; logos?: FoundLogo[] }
+  | { status: 'error'; source: string; error: string; logos?: FoundLogo[] }
+  | { status: 'ready'; source: string; kind?: 'pdf' | 'site'; finishedAt: string; proposal: Proposal; logos?: FoundLogo[] };
 
 const fileOf = (brandId: string) => path.join(BRANDS_DIR, safeId(brandId), 'import.json');
 
@@ -53,27 +53,35 @@ const store = globalThis as typeof globalThis & { __accessoImporting?: Set<strin
 const importing = (store.__accessoImporting ??= new Set<string>());
 export const isImporting = (brandId: string) => importing.has(brandId);
 
+/** Made safe again on the way out, so a hand-edited draft cannot carry anything that runs. */
+function safeLogos(logos: unknown): FoundLogo[] {
+  if (!Array.isArray(logos)) return [];
+  const out: FoundLogo[] = [];
+  for (const l of logos.slice(0, 30)) {
+    try {
+      out.push({ svg: sanitizeSvg(String(l.svg), 'Logo'), from: String(l.from).replace(/[<>]/g, '').slice(0, 200) });
+    } catch {
+      /* left out */
+    }
+  }
+  return out;
+}
+
 export function readImport(brandId: string): ImportState {
   if (!listBrands().includes(brandId)) return { status: 'none' };
   try {
     const state = JSON.parse(fs.readFileSync(fileOf(brandId), 'utf8')) as ImportState;
+    if (state.status === 'none') return state;
+    const logos = safeLogos(state.logos);
     if (state.status === 'ready') {
       const proposal = proposalSchema.safeParse(state.proposal);
-      if (!proposal.success) return { status: 'none' };
-      let logo = state.logo;
-      try {
-        // Made safe again on the way out, so a hand-edited draft cannot carry anything that runs.
-        logo = logo ? { svg: sanitizeSvg(String(logo.svg), 'Logo'), from: String(logo.from).slice(0, 200) } : undefined;
-      } catch {
-        logo = undefined;
-      }
-      return { ...state, proposal: proposal.data, logo };
+      return proposal.success ? { ...state, proposal: proposal.data, logos } : { status: 'none' };
     }
     // A run that was cut off by a restart would otherwise look busy for ever.
     if (state.status === 'working' && !importing.has(brandId)) {
-      return { status: 'error', source: state.source, error: 'Reading the guidelines was interrupted. Try again.' };
+      return { status: 'error', source: state.source, error: 'Reading the guidelines was interrupted. Try again.', logos };
     }
-    return state;
+    return { ...state, logos };
   } catch {
     return { status: 'none' };
   }
@@ -91,10 +99,10 @@ export function clearImport(brandId: string) {
 }
 
 /** Mark the import as started. Returns false if one is already running for this brand. */
-export function beginImport(brandId: string, source: string): boolean {
+export function beginImport(brandId: string, source: SourceText): boolean {
   if (importing.has(brandId)) return false;
   importing.add(brandId);
-  writeImport(brandId, { status: 'working', source, startedAt: new Date().toISOString() });
+  writeImport(brandId, { status: 'working', source: source.label, startedAt: new Date().toISOString(), logos: source.logos });
   return true;
 }
 
@@ -210,9 +218,9 @@ export async function runImport(brandId: string, source: SourceText): Promise<vo
       }
     }
     if (!proposal) throw new Error('The agent could not work out the brand from those guidelines. Try again, or add the details by hand.');
-    writeImport(brandId, { status: 'ready', source: label, kind: source.kind, finishedAt: new Date().toISOString(), proposal, logo: source.logo });
+    writeImport(brandId, { status: 'ready', source: label, kind: source.kind, finishedAt: new Date().toISOString(), proposal, logos: source.logos });
   } catch (err) {
-    writeImport(brandId, { status: 'error', source: label, error: (err as Error).message });
+    writeImport(brandId, { status: 'error', source: label, error: (err as Error).message, logos: source.logos });
   } finally {
     importing.delete(brandId);
   }

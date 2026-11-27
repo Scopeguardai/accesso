@@ -37,6 +37,8 @@ First brand: **Fossefall**.
   rebuilt from safe drawing parts only, and fonts and images are checked by their contents.
   "Fill in from brand guidelines" takes a PDF or a public link: the agent reads the text and
   proposes palettes, font names and brand rules, which a person applies, checks and saves.
+  From a vector PDF the drawn shapes that could be the logo are found without the agent and
+  shown as a gallery of one-colour SVGs: pick one to use as the wordmark or symbol, or download it.
   With no guidelines, paste the brand's website instead: the colours and typefaces its styling
   uses most are read out for the agent, and a logo found in the page header is offered for a
   person to accept. It needs the API key; images and font files are still uploaded by hand.

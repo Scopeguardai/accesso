@@ -34,7 +34,7 @@ export async function POST(request: Request) {
           ? await urlText(url)
           : null;
     if (!source) return NextResponse.json({ error: 'Upload a PDF or paste a link first.' }, { status: 400 });
-    if (!beginImport(brand, source.label)) {
+    if (!beginImport(brand, source)) {
       return NextResponse.json({ error: 'Guidelines are already being read for this brand.' }, { status: 409 });
     }
     after(() => runImport(brand, source));

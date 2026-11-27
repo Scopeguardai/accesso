@@ -153,6 +153,8 @@ export default function DesignView({
   const [impUrl, setImpUrl] = useState('');
   const [impError, setImpError] = useState('');
   const [impApplied, setImpApplied] = useState(false);
+  const [impPick, setImpPick] = useState(0);
+  const impLogos = imp.status === 'none' ? [] : (imp.logos ?? []);
   const impApi = `/api/design/import?brand=${encodeURIComponent(initial.id)}`;
 
   // Load any proposal waiting for this brand, and keep checking while the guidelines are being read.
@@ -183,6 +185,7 @@ export default function DesignView({
     setBusy('import');
     setImpError('');
     setImpApplied(false);
+    setImpPick(0);
     try {
       const form = new FormData();
       form.set('brand', saved.id);
@@ -210,8 +213,9 @@ export default function DesignView({
 
   /** Use the logo found on the website. It goes through the same checks as an uploaded logo. */
   function takeFoundLogo(which: 'wordmark' | 'mark') {
-    if (imp.status !== 'ready' || !imp.logo) return;
-    const file = new File([imp.logo.svg], 'logo-from-website.svg', { type: 'image/svg+xml' });
+    const found = impLogos[impPick];
+    if (!found) return;
+    const file = new File([found.svg], 'found-logo.svg', { type: 'image/svg+xml' });
     upload(which, which === 'wordmark' ? 'Wordmark replaced.' : 'Symbol replaced.', { kind: which, file });
   }
 
@@ -607,6 +611,61 @@ export default function DesignView({
               {impError || (imp.status === 'error' ? imp.error : '')}
             </p>
           )}
+          {impLogos.length > 0 && (
+            <article className="ds-prop" aria-label="Logos found">
+              <p className="ds-prop-head">
+                <b>
+                  {impLogos.length === 1 ? 'A logo was found' : `${impLogos.length} drawings were found`} in{' '}
+                  {imp.status !== 'none' ? imp.source : ''}
+                </b>
+              </p>
+              {impLogos.length > 1 && (
+                <p className="ds-prop-hint">
+                  These are the drawn shapes in the document, most likely logos first. Some will be icons or outlined
+                  text. Pick the one that is the logo, then say what to use it as.
+                </p>
+              )}
+              <div className="ds-found" role="radiogroup" aria-label="Drawings found">
+                {impLogos.map((l, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    role="radio"
+                    aria-checked={i === impPick}
+                    aria-label={`Drawing ${i + 1}, from ${l.from}`}
+                    title={`From ${l.from}`}
+                    className="ds-found-tile"
+                    onClick={() => setImpPick(i)}
+                    dangerouslySetInnerHTML={{ __html: l.svg }}
+                  />
+                ))}
+              </div>
+              <div className="ds-add-actions">
+                <button type="button" className="btn-ink" disabled={busy !== null} onClick={() => takeFoundLogo('wordmark')}>
+                  Use as the wordmark
+                </button>
+                <button type="button" className="btn-quiet" disabled={busy !== null} onClick={() => takeFoundLogo('mark')}>
+                  Use as the symbol
+                </button>
+                <a
+                  className="btn-quiet"
+                  download={`${saved.id}-logo-${impPick + 1}.svg`}
+                  href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(impLogos[impPick]?.svg ?? '')}`}
+                >
+                  Download SVG
+                </a>
+                {imp.status !== 'ready' && imp.status !== 'working' && (
+                  <button type="button" className="btn-quiet" onClick={dismissImport}>
+                    Dismiss
+                  </button>
+                )}
+              </div>
+              <p className="ds-prop-hint">
+                Each is a vector SVG in one colour, as logos are in presentations. Using one replaces the current
+                logo straight away. Only use it if you have the brand&rsquo;s permission.
+              </p>
+            </article>
+          )}
           {imp.status === 'ready' && (
             <article className="ds-prop" aria-label="Proposal from the guidelines">
               <p className="ds-prop-head">
@@ -660,27 +719,6 @@ export default function DesignView({
                   </p>
                 </div>
               )}
-              {imp.logo && (
-                <div>
-                  <p className="ds-prop-label">Logo found in {imp.logo.from}</p>
-                  <div className="ds-prop-logo">
-                    <span dangerouslySetInnerHTML={{ __html: imp.logo.svg }} />
-                    <span className="ds-prop-logo-dark" dangerouslySetInnerHTML={{ __html: imp.logo.svg }} />
-                  </div>
-                  <div className="ds-add-actions">
-                    <button type="button" className="btn-quiet" disabled={busy !== null} onClick={() => takeFoundLogo('wordmark')}>
-                      Use as the wordmark
-                    </button>
-                    <button type="button" className="btn-quiet" disabled={busy !== null} onClick={() => takeFoundLogo('mark')}>
-                      Use as the symbol
-                    </button>
-                  </div>
-                  <p className="ds-prop-hint">
-                    It is shown in one colour, as logos are in presentations. Using it replaces the current logo
-                    straight away. Only use it if you have the brand&rsquo;s permission.
-                  </p>
-                </div>
-              )}
               {imp.proposal.openPoints.length > 0 && (
                 <div>
                   <p className="ds-prop-label">Check these</p>
@@ -694,7 +732,7 @@ export default function DesignView({
               <p className="ds-prop-hint">
                 Applying puts the tagline, {imp.proposal.palettes.length === 1 ? 'palette' : 'palettes'} and brand
                 rules into this page as unsaved changes, replacing the brand rules that are there. Check them, then
-                save. {imp.logo ? 'Images are not taken from the website' : 'The logo and images are not taken automatically'}:
+                save. {impLogos.length > 0 ? 'Images are not taken automatically' : 'The logo and images are not taken automatically'}:
                 add them below.
               </p>
               <div className="ds-add-actions">
