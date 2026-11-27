@@ -13,3 +13,6 @@ data/decks/*
 
 # Written by `next dev` on each start
 AGENTS.md
+
+# Draft proposals from reading brand guidelines
+brands/*/import.json

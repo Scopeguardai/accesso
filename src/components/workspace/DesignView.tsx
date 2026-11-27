@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { cssFontFormat, MAX_IMAGES, MAX_PALETTES } from '@/lib/brand/assets';
 import type { ColourRole, DesignData } from '@/lib/brand/design';
+import type { ImportState } from '@/lib/brand/import';
 import { useAutosize } from './Composer';
 import './design.css';
 
@@ -30,6 +31,7 @@ const PAIRS: { text: ColourRole; on: ColourRole; label: string }[] = [
 ];
 
 const SECTIONS = [
+  ['import', 'From guidelines'],
   ['details', 'Brand details'],
   ['logo', 'Logo'],
   ['colours', 'Colour palettes'],
@@ -146,6 +148,91 @@ export default function DesignView({
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const [newBrand, setNewBrand] = useState<{ name: string; tagline: string; website: string } | null>(null);
   const [newBrandError, setNewBrandError] = useState('');
+
+  const [imp, setImp] = useState<ImportState>({ status: 'none' });
+  const [impUrl, setImpUrl] = useState('');
+  const [impError, setImpError] = useState('');
+  const [impApplied, setImpApplied] = useState(false);
+  const impApi = `/api/design/import?brand=${encodeURIComponent(initial.id)}`;
+
+  // Load any proposal waiting for this brand, and keep checking while the guidelines are being read.
+  useEffect(() => {
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      try {
+        const res = await fetch(impApi, { cache: 'no-store' });
+        const data = (await res.json()) as ImportState;
+        if (stop) return;
+        if (res.ok) setImp(data);
+        if (res.ok && data.status === 'working') timer = setTimeout(check, 3000);
+      } catch {
+        if (!stop) timer = setTimeout(check, 6000);
+      }
+    };
+    if (imp.status === 'none' || imp.status === 'working') check();
+    return () => {
+      stop = true;
+      clearTimeout(timer);
+    };
+    // Runs on opening the page and again each time a reading starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [impApi, imp.status === 'working']);
+
+  async function startImport(fields: { file?: File; url?: string }) {
+    setBusy('import');
+    setImpError('');
+    setImpApplied(false);
+    try {
+      const form = new FormData();
+      form.set('brand', saved.id);
+      if (fields.file) form.set('file', fields.file);
+      if (fields.url) form.set('url', fields.url);
+      const res = await fetch('/api/design/import', { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'The guidelines could not be read. Try again.');
+      setImp(data);
+      setImpUrl('');
+    } catch (err) {
+      setImpError((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function dismissImport() {
+    const res = await fetch(impApi, { method: 'DELETE' }).catch(() => null);
+    if (res?.ok) {
+      setImp({ status: 'none' });
+      setImpApplied(false);
+    }
+  }
+
+  /** Put the proposal into the page as unsaved changes, for a person to check and save. */
+  function applyImport() {
+    if (imp.status !== 'ready') return;
+    const { proposal } = imp;
+    update((d) => {
+      const starterOnly = d.palettes.every((p) => p.source?.startsWith('the starter set'));
+      const kept = starterOnly && proposal.palettes.length > 0 ? [] : d.palettes;
+      const taken = new Set([...d.palettes, ...saved.palettes].map((p) => p.key));
+      const added = proposal.palettes.slice(0, Math.max(0, MAX_PALETTES - kept.length)).map((p) => {
+        let n = 1;
+        while (taken.has(`guide-${n}`)) n += 1;
+        taken.add(`guide-${n}`);
+        return { key: `guide-${n}`, label: p.label, colours: { ...p.colours }, usedBy: 0 };
+      });
+      const palettes = [...kept, ...added];
+      return {
+        ...d,
+        tagline: proposal.tagline || d.tagline,
+        palettes,
+        defaultPalette: palettes.some((p) => p.key === d.defaultPalette) ? d.defaultPalette : palettes[0].key,
+        guide: proposal.guide,
+      };
+    });
+    setImpApplied(true);
+  }
 
   async function createBrand(e: FormEvent) {
     e.preventDefault();
@@ -453,6 +540,128 @@ export default function DesignView({
             </ul>
           </div>
         )}
+
+        <section id="ds-import" className="ds-sec">
+          <h2>Fill in from brand guidelines</h2>
+          <p className="ds-lede">
+            Upload the guidelines as a PDF, or paste a link to them. The agent reads them and proposes the colours,
+            fonts and brand rules for you to check. Nothing changes until you apply the proposal and save.
+          </p>
+          {imp.status === 'working' ? (
+            <p className="ds-imp-working" role="status">
+              <span className="dot" data-status="generating" aria-hidden="true" />
+              Reading {imp.source}. This usually takes a minute or two; you can leave this page.
+            </p>
+          ) : (
+            <form
+              className="ds-imp-form"
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!impUrl.trim()) setImpError('Paste a link first, or upload a PDF.');
+                else startImport({ url: impUrl.trim() });
+              }}
+            >
+              <FileButton
+                label="Upload a PDF"
+                accept=".pdf,application/pdf"
+                busy={busy === 'import'}
+                onFile={(file) => startImport({ file })}
+              />
+              <span className="ds-imp-or">or</span>
+              <input
+                value={impUrl}
+                onChange={(e) => {
+                  setImpUrl(e.target.value);
+                  setImpError('');
+                }}
+                placeholder="https://example.com/brand-guidelines.pdf"
+                aria-label="Link to the guidelines"
+                inputMode="url"
+              />
+              <button type="submit" className="btn-quiet" disabled={busy === 'import'}>
+                Read link
+              </button>
+            </form>
+          )}
+          {(impError || imp.status === 'error') && (
+            <p className="ds-msg" data-tone="error" role="alert">
+              {impError || (imp.status === 'error' ? imp.error : '')}
+            </p>
+          )}
+          {imp.status === 'ready' && (
+            <article className="ds-prop" aria-label="Proposal from the guidelines">
+              <p className="ds-prop-head">
+                <b>Proposed from {imp.source}</b>
+              </p>
+              <p>{imp.proposal.summary}</p>
+              {imp.proposal.tagline && (
+                <p>
+                  <span className="ds-prop-label">Tagline</span> {imp.proposal.tagline}
+                </p>
+              )}
+              {imp.proposal.palettes.length > 0 && (
+                <ul className="ds-prop-pals">
+                  {imp.proposal.palettes.map((p) => (
+                    <li key={p.label + p.where}>
+                      <span className="ds-prop-swatches" aria-hidden="true">
+                        {(['dark', 'accent', 'light', 'tint', 'ink', 'muted'] as const).map((r) => (
+                          <i key={r} style={{ background: p.colours[r] }} />
+                        ))}
+                      </span>
+                      <span>{p.label}</span>
+                      <span className="ds-prop-where">{p.where}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(imp.proposal.fonts.headline || imp.proposal.fonts.detail) && (
+                <div>
+                  <p className="ds-prop-label">Fonts named in the guidelines</p>
+                  <ul className="ds-prop-list">
+                    {imp.proposal.fonts.headline && (
+                      <li>
+                        <b>{imp.proposal.fonts.headline.family}</b> for headlines. {imp.proposal.fonts.headline.note}
+                      </li>
+                    )}
+                    {imp.proposal.fonts.detail && (
+                      <li>
+                        <b>{imp.proposal.fonts.detail.family}</b> for details. {imp.proposal.fonts.detail.note}
+                      </li>
+                    )}
+                  </ul>
+                  <p className="ds-prop-hint">
+                    Font files are not taken from guidelines. If these differ from the fonts below, upload the files
+                    under Typography.
+                  </p>
+                </div>
+              )}
+              {imp.proposal.openPoints.length > 0 && (
+                <div>
+                  <p className="ds-prop-label">Check these</p>
+                  <ul className="ds-prop-list">
+                    {imp.proposal.openPoints.map((o) => (
+                      <li key={o}>{o}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="ds-prop-hint">
+                Applying puts the tagline, {imp.proposal.palettes.length === 1 ? 'palette' : 'palettes'} and brand
+                rules into this page as unsaved changes, replacing the brand rules that are there. Check them, then
+                save. The logo and images are not taken from guidelines: add them below.
+              </p>
+              <div className="ds-add-actions">
+                <button type="button" className="btn-ink" onClick={applyImport} disabled={impApplied}>
+                  {impApplied ? 'Applied: check and save' : 'Apply to this page'}
+                </button>
+                <button type="button" className="btn-quiet" onClick={dismissImport}>
+                  Dismiss
+                </button>
+              </div>
+            </article>
+          )}
+        </section>
 
         <section id="ds-details" className="ds-sec">
           <h2>Brand details</h2>

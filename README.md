@@ -29,6 +29,9 @@ First brand: **Fossefall**.
   brand rules and example briefs. Colours and text are edited on the page and saved together;
   logo, font and image files are uploaded or removed one at a time. Uploaded logos are
   rebuilt from safe drawing parts only, and fonts and images are checked by their contents.
+  "Fill in from brand guidelines" takes a PDF or a public link: the agent reads the text and
+  proposes palettes, font names and brand rules, which a person applies, checks and saves.
+  It needs the API key; logos, images and font files are still uploaded by hand.
   "New brand" creates another brand with a placeholder logo, starter colours, fonts and rules,
   and the page lists what still needs the brand's own material.
 

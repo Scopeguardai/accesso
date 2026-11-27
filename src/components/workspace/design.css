@@ -760,3 +760,96 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* reading guidelines */
+.ds .ds-imp-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.ds .ds-imp-or {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.ds .ds-imp-form input:not([type='file']) {
+  flex: 1 1 14rem;
+  min-width: 0;
+  height: 2rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--line-2);
+  border-radius: 0.5rem;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 0.8125rem;
+}
+
+.ds .ds-imp-form input:not([type='file']):focus {
+  border-color: var(--mut);
+  outline: none;
+}
+
+.ds .ds-imp-working {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  font-size: 0.875rem;
+}
+
+.ds .ds-prop {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line-2);
+  border-radius: 0.75rem;
+  background: var(--soft);
+  font-size: 0.875rem;
+}
+
+.ds .ds-prop-label {
+  color: var(--mut);
+  font-size: 0.75rem;
+}
+
+.ds .ds-prop-pals {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.ds .ds-prop-pals li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.75rem;
+}
+
+.ds .ds-prop-swatches {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 0.3rem;
+  box-shadow: 0 0 0 1px rgb(28 31 29 / 0.12);
+}
+
+.ds .ds-prop-swatches i {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ds .ds-prop-where,
+.ds .ds-prop-hint {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.ds .ds-prop-list {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+  padding-left: 1.1rem;
+  list-style: disc;
+}

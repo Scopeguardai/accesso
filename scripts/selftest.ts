@@ -10,6 +10,8 @@ import { systemPrompt } from '../src/lib/agent/prompt';
 import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand/assets';
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
 import { designData } from '../src/lib/brand/design';
+import { proposalSchema, readImport } from '../src/lib/brand/import';
+import { checkPublicUrl, htmlToText, pdfText, SourceError } from '../src/lib/brand/import-source';
 import { imageFor, listBrands, loadBrand } from '../src/lib/brand/load';
 import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
@@ -230,4 +232,25 @@ check('a new brand starts with working starter assets and a list of what to add'
   }
 });
 
-console.log(`\n${passed} checks passed`);
+void (async () => {
+  // Reading guidelines: only public links are fetched, and only real PDFs are read.
+  for (const url of ['http://127.0.0.1/a.pdf', 'http://169.254.169.254/', 'http://[::1]/', 'http://10.1.2.3/', 'file:///etc/passwd', 'https://example.com:8443/a', 'intranet', 'https://user:pw@example.com/']) {
+    await assert.rejects(checkPublicUrl(url), SourceError, url);
+  }
+  await assert.rejects(pdfText(Buffer.from('<html>not a pdf</html>'), 'x.pdf'), SourceError);
+  assert.equal(htmlToText('<style>p{}</style><p>Deep forest <b>#1B1F1A</b></p><script>alert(1)</script>'), 'Deep forest #1B1F1A');
+  const colours = Object.fromEntries(
+    ['dark', 'onDark', 'accent', 'onAccent', 'light', 'paper', 'tint', 'ink', 'muted', 'line'].map((r) => [r, '#1b1f1a']),
+  );
+  const good = { summary: 's', palettes: [{ label: 'Forest', where: 'page 9', colours }], fonts: {}, guide: 'x'.repeat(200), openPoints: [] };
+  assert.equal(proposalSchema.parse(good).palettes[0].colours.dark, '#1B1F1A');
+  assert.throws(() => proposalSchema.parse({ ...good, palettes: [{ label: '<b>', where: '', colours }] }));
+  assert.throws(() => proposalSchema.parse({ ...good, palettes: [{ label: 'x', where: '', colours: { ...colours, dark: 'red' } }] }));
+  assert.equal(readImport('no-such-brand').status, 'none');
+  passed += 1;
+  console.log('ok  guidelines are read only from real PDFs and public links, and proposals are checked');
+  console.log(`\n${passed} checks passed`);
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
