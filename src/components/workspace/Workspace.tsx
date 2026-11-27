@@ -455,8 +455,9 @@ export default function Workspace({
           </div>
         ) : brand ? (
           <main className="cv-home">
-            <NewDeck brand={brand} busy={sending} error={error} onCreate={createDeck} />
-            <Gallery decks={decks} brands={brands} />
+            <NewDeck brand={brand} knowledgeCount={kbCount} busy={sending} error={error} onCreate={createDeck}>
+              {decks.length > 0 ? <Gallery decks={decks} brands={brands} /> : null}
+            </NewDeck>
           </main>
         ) : (
           <p className="ws-empty">Add a brand pack to the brands folder to start.</p>

@@ -316,7 +316,7 @@
 .cv .new {
   display: block;
   min-height: 0;
-  padding: clamp(2.5rem, 11vh, 6.5rem) var(--gutter) 2.5rem;
+  padding: clamp(2rem, 8vh, 4.5rem) var(--gutter) 4rem;
 }
 
 .cv .new-title {
@@ -372,20 +372,49 @@
   height: auto;
 }
 
+.new-inner .gal {
+  max-width: none;
+  margin: 2.75rem 0 0;
+  padding: 0;
+}
+
+.new-inner .gal + .starters {
+  margin-top: 2.75rem;
+}
+
+.new-h2-count {
+  margin-left: 0.2rem;
+  color: var(--mut);
+  font-weight: 500;
+}
+
 .gal-title {
+  display: -webkit-box;
   overflow: hidden;
   font-size: 0.875rem;
   font-weight: 550;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .gal-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.15rem 0.75rem;
   color: var(--mut);
   font-size: 0.75rem;
+}
+
+.gal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gal-status[data-status='error'] {
+  color: var(--red);
 }
 
 /* ---------- knowledge base ---------- */
