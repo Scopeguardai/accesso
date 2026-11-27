@@ -277,13 +277,17 @@ void (async () => {
     `<title>Northwind &ndash; Calm</title><style>:root{--brand:#0B3D2E}body{font-family:"Sohne",sans-serif;background:#FAF7F0}
      h1{font-family:Fraunces,serif}code{font:500 12px/1.4 "IBM Plex Mono",monospace}</style>
      <header><a href="/"><svg viewBox="0 0 120 24" onload="x()"><script>x()</script><path d="M2 2h20v20H2z M30 4h8l6 12V4h6v16h-8l-6-12v12h-6z M60 4h18v4H66v2h10v4H66v6h-6z M84 4h6v12h10v4H84z"/></svg></a></header>
-     <h1>Calm logistics</h1><p>${'Freight that arrives when we say it will. '.repeat(8)}</p><script>var c = "#FF00FF"</script>`,
+     <h1>Calm logistics</h1><p>${'Freight that arrives when we say it will. '.repeat(8)}</p><script>var c = "#FF00FF"</script>
+     <svg style="display:none"><symbol id="leaf" viewBox="0 0 40 40"><path d="M4 36C4 16 16 4 36 4c0 20-12 32-32 32z M10 30c6-10 12-16 22-22-8 8-14 14-20 24z M12 34h20v2H12z"/></symbol></svg>
+     <footer><svg class="deco"><use href="#leaf"/></svg><svg viewBox="0 0 4 4"><path d="M0 0h4"/></svg></footer>`,
   );
   assert.equal(site.kind, 'site');
   for (const part of ['Northwind - Calm', '--brand: #0B3D2E', '#FAF7F0 used 1 times, 1 as a background', 'Fraunces used 1 times, on headings', 'IBM Plex Mono', 'Sohne']) {
     assert.ok(site.text.includes(part), part);
   }
   assert.ok(!site.text.includes('#FF00FF'), 'colours inside scripts are not styling');
+  assert.equal(site.logos?.length, 2, 'the header logo first, then the drawing rebuilt from the shared sprite; the tiny icon is left out');
+  assert.ok(site.logos?.[1].svg.includes('M4 36C4 16'));
   const siteLogo = site.logos?.[0];
   assert.ok(siteLogo && siteLogo.svg.includes('M30 4h8') && !/script|onload/.test(siteLogo.svg), 'the logo is found and made safe');
 

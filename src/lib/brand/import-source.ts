@@ -267,39 +267,73 @@ const attr = (tag: string, name: string) =>
 const top = (map: Map<string, number>, n: number) =>
   [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
 
-/** Look for the brand's logo as an SVG: drawn into the page header, or linked as an .svg image. */
-async function findLogo(html: string, base: URL): Promise<FoundLogo | undefined> {
-  const head = /<header\b[\s\S]*?<\/header>/i.exec(html)?.[0] ?? html.slice(0, 60_000);
-  const tries: (() => Promise<{ svg: string; from: string } | null>)[] = [];
-  for (const m of head.matchAll(/<a\b[^>]*>([\s\S]{0,6000}?)<\/a>/gi)) {
-    const tag = m[0].slice(0, m[0].indexOf('>') + 1);
-    const inner = /<svg\b[\s\S]*?<\/svg>/i.exec(m[1])?.[0];
-    const isHome = /^(\/|\.\/?|#)?$/.test(attr(tag, 'href').replace(base.origin, ''));
-    if (inner && (isHome || /logo|brand/i.test(m[0].slice(0, 400)))) {
-      tries.push(async () => ({ svg: inner, from: 'the page header' }));
-    }
+/** A drawing that only points at a shared sprite (<use href="#id">) is rebuilt from that sprite. */
+function inlineSprite(svg: string, html: string): string {
+  const ref = /<use\b[^>]*?(?:xlink:)?href\s*=\s*["']#([\w:.-]+)["']/i.exec(svg)?.[1];
+  if (!ref || /<(path|polygon|rect|circle|ellipse)\b/i.test(svg)) return svg;
+  const symbol = new RegExp(`<symbol\\b[^>]*\\bid\\s*=\\s*["']${ref.replace(/[.]/g, '\\.')}["'][^>]*>([\\s\\S]*?)</symbol>`, 'i').exec(html);
+  if (!symbol) return svg;
+  const box = attr(symbol[0].slice(0, symbol[0].indexOf('>') + 1), 'viewBox') || attr(svg.slice(0, svg.indexOf('>') + 1), 'viewBox');
+  return `<svg xmlns="http://www.w3.org/2000/svg"${box ? ` viewBox="${box}"` : ''}>${symbol[1]}</svg>`;
+}
+
+/**
+ * Every SVG drawing on the page that could be the logo, likeliest first: the one in the
+ * header's home link, anything labelled as a logo, the site icon, then the rest.
+ */
+async function findLogos(html: string, base: URL): Promise<FoundLogo[]> {
+  type Candidate = { rank: number; get: () => Promise<{ svg: string; from: string }> };
+  const candidates: Candidate[] = [];
+  const header = /<header\b[\s\S]*?<\/header>/i.exec(html);
+  const headerEnd = header ? header.index + header[0].length : Math.min(html.length, 60_000);
+  const headerStart = header?.index ?? 0;
+
+  for (const m of html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)) {
+    if (m[0].length > 400_000) continue;
+    const at = m.index ?? 0;
+    const before = html.slice(Math.max(0, at - 500), at);
+    const link = /<a\b[^>]*>(?![\s\S]*<\/a>)/i.exec(before)?.[0] ?? '';
+    const inHeader = at >= headerStart && at < headerEnd;
+    const home = link && /^(\/|\.\/?|#)?$/.test(attr(link, 'href').replace(base.origin, ''));
+    const labelled = /logo|brand|wordmark/i.test(link + m[0].slice(0, 300));
+    const rank = (inHeader && home ? 0 : labelled ? 1 : inHeader ? 3 : 5);
+    const svg = inlineSprite(m[0], html);
+    candidates.push({ rank, get: async () => ({ svg, from: inHeader ? 'the page header' : 'the page' }) });
   }
-  for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
-    const src = attr(m[0], 'src');
-    if (!/\.svg(\?|$)/i.test(src) || !/logo|brand|wordmark/i.test(m[0])) continue;
-    tries.push(async () => {
-      const file = await fetchPublic(new URL(src, base).toString(), 400_000);
-      return { svg: Buffer.from(file.bytes).toString('utf8'), from: file.url.hostname + file.url.pathname };
+  const linked = (src: string, rank: number) => {
+    if (!src || !/\.svg(\?|#|$)/i.test(src)) return;
+    candidates.push({
+      rank,
+      get: async () => {
+        const file = await fetchPublic(new URL(decode(src), base).toString(), 400_000);
+        return { svg: Buffer.from(file.bytes).toString('utf8'), from: file.url.hostname + file.url.pathname };
+      },
     });
-  }
-  for (const attempt of tries.slice(0, 4)) {
+  };
+  for (const m of html.matchAll(/<img\b[^>]*>/gi)) linked(attr(m[0], 'src'), /logo|brand|wordmark/i.test(m[0]) ? 1 : 4);
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) if (/icon/i.test(attr(m[0], 'rel'))) linked(attr(m[0], 'href'), 2);
+
+  const found: FoundLogo[] = [];
+  const seen = new Set<string>();
+  let fetched = 0;
+  for (const c of candidates.sort((a, b) => a.rank - b.rank).slice(0, 40)) {
+    if (found.length >= 16) break;
     try {
-      const found = await attempt();
-      if (!found || found.svg.length > 400_000) continue;
-      const svg = sanitizeSvg(found.svg, 'Logo');
-      // A drawing with almost nothing in it is an icon or a sprite reference, not a logo.
-      if ((svg.match(/<(path|polygon|rect|circle|ellipse|polyline|line)\b/g) ?? []).length === 0 || svg.length < 200) continue;
-      return { svg, from: found.from };
+      if (c.rank !== 0 && c.rank !== 3 && c.rank !== 5 && (fetched += 1) > 12) continue;
+      const got = await c.get();
+      if (got.svg.length > 400_000) continue;
+      const svg = sanitizeSvg(got.svg, 'Logo');
+      // A drawing with almost nothing in it is a tiny icon or an empty sprite reference, not a logo.
+      if (!/<(path|polygon|rect|circle|ellipse|polyline|line)\b/.test(svg) || svg.length < 200) continue;
+      const key = svg.replace(/\s+/g, '');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      found.push({ svg, from: got.from });
     } catch {
       /* try the next candidate */
     }
   }
-  return undefined;
+  return found;
 }
 
 /** Read a website as an identity guide: what it says, and the colours, fonts and logo it uses. */
@@ -375,12 +409,11 @@ async function siteSource(url: URL, html: string): Promise<SourceText> {
     text,
   ].filter((l): l is string => l !== false && l !== undefined && (l === '' || l.length > 0));
 
-  const logo = await findLogo(html, url);
   return {
     label: url.hostname + (url.pathname.length > 1 ? url.pathname : ''),
     kind: 'site',
     text: clip(lines.join('\n')),
-    logos: logo ? [logo] : [],
+    logos: await findLogos(html, url),
   };
 }
 

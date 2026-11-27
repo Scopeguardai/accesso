@@ -40,8 +40,8 @@ First brand: **Fossefall**.
   From a vector PDF the drawn shapes that could be the logo are found without the agent and
   shown as a gallery of one-colour SVGs: pick one to use as the wordmark or symbol, or download it.
   With no guidelines, paste the brand's website instead: the colours and typefaces its styling
-  uses most are read out for the agent, and a logo found in the page header is offered for a
-  person to accept. It needs the API key; images and font files are still uploaded by hand.
+  uses most are read out for the agent, and every SVG drawing on the page is offered in the same
+  gallery, the header logo first. It needs the API key; images and font files are still uploaded by hand.
   "New brand" creates another brand with a placeholder logo, starter colours, fonts and rules,
   and the page lists what still needs the brand's own material.
 

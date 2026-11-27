@@ -621,8 +621,9 @@ export default function DesignView({
               </p>
               {impLogos.length > 1 && (
                 <p className="ds-prop-hint">
-                  These are the drawn shapes in the document, most likely logos first. Some will be icons or outlined
-                  text. Pick the one that is the logo, then say what to use it as.
+                  These are the drawings found in the {imp.status === 'ready' && imp.kind === 'site' ? 'page' : 'source'},
+                  most likely logos first. Some will be icons or outlined text. Pick the one that is the logo, then say
+                  what to use it as.
                 </p>
               )}
               <div className="ds-found" role="radiogroup" aria-label="Drawings found">
