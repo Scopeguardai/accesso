@@ -8,13 +8,13 @@ import { brandOptions } from '@/lib/workspace';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Knowledge base · Voila' };
 
-export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ entry?: string }> }) {
-  const { entry } = await searchParams;
+export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ entry?: string; brand?: string; tab?: string }> }) {
+  const { entry, brand, tab } = await searchParams;
   const brands = brandOptions();
   if (brands.length === 0) redirect('/');
   // An entry path starts with its brand's folder, e.g. "fossefall/positioning.md".
   const fromEntry = entry?.split('/')[0];
-  const brandId = brands.find((b) => b.id === fromEntry)?.id ?? brands[0]?.id;
+  const brandId = brands.find((b) => b.id === fromEntry)?.id ?? brands.find((b) => b.id === brand)?.id ?? brands[0]?.id;
   const knowledge = brandId ? listKnowledge(brandId).map(summarizeEntry) : [];
   const validEntry = entry && knowledge.some((k) => k.path === entry) ? entry : undefined;
   return (
@@ -27,6 +27,8 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
       deck={null}
       knowledge={knowledge}
       entry={validEntry}
+      brandId={brandId}
+      kbTab={tab === 'styles' ? 'styles' : 'facts'}
     />
   );
 }

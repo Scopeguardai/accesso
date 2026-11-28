@@ -1,3 +1,4 @@
+import { styleGuidance } from '../knowledge/styles';
 import { loadBrand } from '../brand/load';
 import { appendThread, finishRun, readDeck, updateDeck } from '../deck/store';
 import { ROOT } from '../paths';
@@ -67,7 +68,7 @@ export async function runAgent(req: RunRequest): Promise<void> {
     const run = sdk.query({
       prompt: req.mode === 'create' ? createPrompt(deck) : editPrompt(deck, req.request, req.slideId),
       options: {
-        systemPrompt: systemPrompt(brand),
+        systemPrompt: systemPrompt(brand, styleGuidance(deck.client, deck.brief.style)),
         model: process.env.ACCESSO_MODEL || undefined,
         cwd: ROOT,
         // The agent gets the deck tools and nothing else: no files, shell or web.

@@ -22,6 +22,7 @@ import { briefSchema, LAYOUTS } from '../src/lib/deck/schema';
 import { readDeck, writeDeck } from '../src/lib/deck/store';
 import { listKnowledge, readKnowledge, searchKnowledge } from '../src/lib/knowledge/search';
 import { parseEntry, serializeEntry } from '../src/lib/knowledge/format';
+import { createStyle, deleteStyle, listStyles, styleGuidance, styleInputSchema, updateStyle } from '../src/lib/knowledge/styles';
 import { createEntry, deleteEntry, EntryNotFound, entryInputSchema, entryUsage, updateEntry } from '../src/lib/knowledge/write';
 import { DECKS_DIR, KNOWLEDGE_DIR, ROOT } from '../src/lib/paths';
 
@@ -266,6 +267,31 @@ check('deleting a brand moves it, its knowledge and its presentations aside, and
     fs.rmSync(path.join(DECKS_DIR, `${deckId}.json`), { force: true });
     if (trashId) fs.rmSync(path.join(TRASH_DIR, trashId), { recursive: true, force: true });
   }
+});
+
+check('presentation styles are kept apart from knowledge and reach the agent as guidance', () => {
+  const before = listKnowledge('fossefall').length;
+  const body = '## Structure\nOpen with the problem, then the platform, then the ask. Ten slides.';
+  const pitch = createStyle('fossefall', styleInputSchema.parse({ name: 'Selftest pitch', when: 'First investor meetings', body }));
+  const update = createStyle('fossefall', styleInputSchema.parse({ name: 'Selftest update', body: 'Short and factual. Five slides at most.' }));
+  try {
+    assert.equal(listKnowledge('fossefall').length, before, 'styles are not knowledge entries');
+    assert.equal(searchKnowledge('fossefall', 'investor meetings problem platform ask').some((h) => h.path.includes('_styles')), false);
+    assert.throws(() => createStyle('fossefall', styleInputSchema.parse({ name: 'selftest PITCH', body })), /already/);
+    assert.throws(() => styleInputSchema.parse({ name: '<b>x</b>', body }));
+    assert.throws(() => updateStyle('fossefall', '../x', styleInputSchema.parse({ name: 'x', body })));
+    const chosen = styleGuidance('fossefall', pitch.id);
+    assert.ok(chosen.includes('The person chose this style') && chosen.includes('Open with the problem') && !chosen.includes('Five slides at most'));
+    const open = styleGuidance('fossefall', undefined);
+    assert.ok(open.includes('best fits the brief') && open.includes('Open with the problem') && open.includes('Five slides at most'));
+    assert.equal(styleGuidance('fossefall', 'none'), '');
+    assert.ok(systemPrompt(brand, chosen).includes('<presentation_styles>') && !systemPrompt(brand).includes('<presentation_styles>'));
+    assert.equal(updateStyle('fossefall', pitch.id, styleInputSchema.parse({ name: 'Selftest pitch', body: `${body} Revised.` })).body.endsWith('Revised.'), true);
+  } finally {
+    for (const s of listStyles('fossefall').filter((x) => x.name.startsWith('Selftest'))) deleteStyle('fossefall', s.id);
+    fs.rmSync(path.join(KNOWLEDGE_DIR, 'fossefall', '_styles'), { recursive: true, force: true });
+  }
+  assert.equal(styleGuidance('fossefall', undefined), '');
 });
 
 check('the team password guards sign-in, and a changed password signs everyone out', () => {

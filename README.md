@@ -33,6 +33,11 @@ First brand: **Fossefall**.
   does, read and edit entries, mark them draft or verified, add new ones by typing or
   uploading a `.md` or `.txt` file, and see which presentations cite each entry.
   Sources the agent read link straight to their entry.
+- **Presentation styles.** A tab of the knowledge base: for each brand, how its presentations of
+  each kind are built (structure, length, tone, slide habits), kept as Markdown in
+  `knowledge/<brand>/_styles`. A Style picker on the new-presentation form passes the chosen one to
+  the agent; left open, the agent is given them all and picks the one that fits the brief. Styles
+  are guidance: knowledge search does not return them and the agent never cites them.
 - **Design system.** The brand the agent designs with: logo, colour palettes, fonts, images,
   brand rules and example briefs. Colours and text are edited on the page and saved together;
   logo, font and image files are uploaded or removed one at a time. Uploaded logos are

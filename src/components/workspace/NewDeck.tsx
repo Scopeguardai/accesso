@@ -25,6 +25,7 @@ export default function NewDeck({
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(8);
   const [palette, setPalette] = useState('');
+  const [style, setStyle] = useState('');
   const [more, setMore] = useState(false);
   const [audience, setAudience] = useState('');
   const [goal, setGoal] = useState('');
@@ -39,6 +40,7 @@ export default function NewDeck({
       prompt: prompt.trim(),
       slideCount: Math.min(20, Math.max(3, slideCount || 8)),
       palette: palette || undefined,
+      style: style || undefined,
       audience: audience.trim(),
       goal: goal.trim(),
       tone: tone.trim(),
@@ -80,6 +82,20 @@ export default function NewDeck({
                   />
                 </label>
                 <PalettePicker palettes={brand.palettes} value={palette} onChange={setPalette} allowAuto />
+                {brand.styles.length > 0 && (
+                  <label className="chip chip-field chip-select">
+                    <span>Style</span>
+                    <select value={style} onChange={(e) => setStyle(e.target.value)} aria-label="Presentation style">
+                      <option value="">Agent chooses</option>
+                      {brand.styles.map((s) => (
+                        <option key={s.id} value={s.id} title={s.when}>
+                          {s.name}
+                        </option>
+                      ))}
+                      <option value="none">No style</option>
+                    </select>
+                  </label>
+                )}
                 <button
                   type="button"
                   className="chip"

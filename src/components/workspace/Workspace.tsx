@@ -15,6 +15,7 @@ import { copyText } from './copy';
 import DesignView from './DesignView';
 import Gallery from './Gallery';
 import KnowledgeView from './KnowledgeView';
+import StylesView from './StylesView';
 import NewDeck from './NewDeck';
 import Preview, { type PreviewMode } from './Preview';
 import SettingsMenu from './SettingsMenu';
@@ -94,6 +95,7 @@ export default function Workspace({
   entry,
   designs,
   brandId: openBrand,
+  kbTab: openKbTab,
   renderedAt,
 }: {
   brands: BrandOption[];
@@ -108,6 +110,8 @@ export default function Workspace({
   designs?: DesignData[];
   /** The brand to open, when the page asks for one. */
   brandId?: string;
+  /** Which part of the knowledge base to open: the entries, or the presentation styles. */
+  kbTab?: 'facts' | 'styles';
   /** When the server rendered the page, so the first browser render matches it. */
   renderedAt: number;
 }) {
@@ -120,6 +124,7 @@ export default function Workspace({
   const [history, setHistory] = useState(false);
   const [mode, setMode] = useState<PreviewMode>('desktop');
   const [pane, setPane] = useState<'chat' | 'preview'>('chat');
+  const [kbTab, setKbTab] = useState<'facts' | 'styles'>(openKbTab ?? 'facts');
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -309,7 +314,7 @@ export default function Workspace({
               {section === 'knowledge' && (
                 <span className="top-page">
                   Knowledge base
-                  <span className="top-count">{kbCount === 1 ? '1 entry' : `${kbCount} entries`}</span>
+                  {kbTab === 'facts' && <span className="top-count">{kbCount === 1 ? '1 entry' : `${kbCount} entries`}</span>}
                 </span>
               )}
               {section === 'design' && <span className="top-page">Design system</span>}
@@ -318,6 +323,17 @@ export default function Workspace({
           )}
 
           {section === 'knowledge' && (
+            <div className="seg" role="group" aria-label="Part of the knowledge base">
+              <button type="button" aria-pressed={kbTab === 'facts'} onClick={() => setKbTab('facts')}>
+                Facts
+              </button>
+              <button type="button" aria-pressed={kbTab === 'styles'} onClick={() => setKbTab('styles')}>
+                <span className="label-long">Presentation styles</span>
+                <span className="label-short">Styles</span>
+              </button>
+            </div>
+          )}
+          {section === 'knowledge' && kbTab === 'facts' && (
             <div className="seg kb-tabs" role="group" aria-label="Show">
               <button type="button" aria-pressed={pane === 'chat'} onClick={() => setPane('chat')}>
                 Entries
@@ -386,18 +402,18 @@ export default function Workspace({
           )}
           {section === 'new' && (
             <>
-              <Link href="/design" className="btn-quiet top-wide" title="The brand the agent designs with">
+              <Link href={`/design?brand=${encodeURIComponent(brandId)}`} className="btn-quiet top-wide" title="The brand the agent designs with">
                 <IconPalette />
                 Design system
               </Link>
-              <Link href="/knowledge" className="btn-quiet top-wide" title="What the agent knows">
+              <Link href={`/knowledge?brand=${encodeURIComponent(brandId)}`} className="btn-quiet top-wide" title="What the agent knows">
                 <IconBook />
                 Knowledge base
               </Link>
-              <Link href="/design" className="icon-btn top-narrow" aria-label="Design system" title="Design system">
+              <Link href={`/design?brand=${encodeURIComponent(brandId)}`} className="icon-btn top-narrow" aria-label="Design system" title="Design system">
                 <IconPalette />
               </Link>
-              <Link href="/knowledge" className="icon-btn top-narrow" aria-label="Knowledge base" title="Knowledge base">
+              <Link href={`/knowledge?brand=${encodeURIComponent(brandId)}`} className="icon-btn top-narrow" aria-label="Knowledge base" title="Knowledge base">
                 <IconBook />
               </Link>
             </>
@@ -416,12 +432,14 @@ export default function Workspace({
               );
             })()}
           </div>
+        ) : section === 'knowledge' && brand && kbTab === 'styles' ? (
+          <StylesView key={brand.id} brand={brand.id} brandName={brand.name} />
         ) : section === 'knowledge' && brand ? (
           <div className="cv-kb">
             <KnowledgeView
               key={brand.id}
               brand={brand}
-              initial={brand.id === (entry?.split('/')[0] ?? brands[0]?.id) ? (knowledge ?? []) : []}
+              initial={brand.id === (entry?.split('/')[0] ?? openBrand ?? brands[0]?.id) ? (knowledge ?? []) : []}
               initialPath={entry?.startsWith(`${brand.id}/`) ? entry : undefined}
               onCount={setKbCount}
               onShowEntry={() => setPane('preview')}

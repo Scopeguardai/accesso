@@ -1,5 +1,6 @@
 import { listBrands, loadBrand } from './brand/load';
 import { listKnowledge } from './knowledge/search';
+import { listStyles } from './knowledge/styles';
 
 /** What the workspace screens need to know about each brand. Plain data, safe to send to the browser. */
 export type BrandOption = {
@@ -10,6 +11,7 @@ export type BrandOption = {
   wordmarkSvg: string;
   palettes: { key: string; label: string; dark: string; accent: string; light: string; paper: string }[];
   knowledge: { path: string; title: string; status: string }[];
+  styles: { id: string; name: string; when: string }[];
 };
 
 export function brandOptions(): BrandOption[] {
@@ -30,6 +32,7 @@ export function brandOptions(): BrandOption[] {
         paper: p.paper,
       })),
       knowledge: listKnowledge(id).map((k) => ({ path: k.path, title: k.title, status: k.status })),
+      styles: listStyles(id).map((s) => ({ id: s.id, name: s.name, when: s.when })),
     };
   });
 }

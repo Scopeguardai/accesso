@@ -157,6 +157,8 @@ export const briefObjectSchema = z.object({
   slideCount: z.number().int().min(3).max(20).default(8),
   tone: z.string().max(120).default(''),
   palette: z.string().max(40).optional(),
+  /** A presentation style id, "none" for no style, or left out to let the agent choose. */
+  style: z.string().max(60).optional(),
 });
 
 /** Accepts briefs saved before the prompt field existed ({ topic, mustInclude }). */

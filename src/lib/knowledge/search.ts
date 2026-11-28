@@ -39,7 +39,10 @@ export function listKnowledge(client: string): KnowledgeEntry[] {
   const walk = (current: string) => {
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
       const full = path.join(current, entry.name);
-      if (entry.isDirectory()) walk(full);
+      // Folders starting with _ hold other things (presentation styles), not knowledge entries.
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith('_')) walk(full);
+      }
       else if (entry.name.endsWith('.md') && !entry.name.startsWith('_')) {
         const rel = path.relative(KNOWLEDGE_DIR, full).split(path.sep).join('/');
         out.push(parse(rel, fs.readFileSync(full, 'utf8')));

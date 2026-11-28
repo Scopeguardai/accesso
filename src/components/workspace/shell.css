@@ -439,3 +439,171 @@
     padding: 0 0.6rem;
   }
 }
+
+/* ---------- presentation styles (a tab of the knowledge base) ---------- */
+
+.pst {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pst .pst-inner {
+  display: grid;
+  gap: 1rem;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem) 5rem;
+}
+
+.pst h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pst .pst-lede,
+.pst .pst-empty p {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+.pst .pst-notice {
+  font-size: 0.875rem;
+}
+
+.pst .pst-empty {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px dashed var(--line-2);
+  border-radius: 0.75rem;
+}
+
+.pst .pst-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pst .pst-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pst .pst-list button {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pst .pst-list button:hover {
+  border-color: var(--mut);
+}
+
+.pst .pst-list b {
+  font-weight: 600;
+}
+
+.pst .pst-when {
+  font-size: 0.875rem;
+}
+
+.pst .pst-snippet,
+.pst .pst-hint {
+  color: var(--mut);
+  font-size: 0.8125rem;
+}
+
+.pst .pst-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.pst .pst-form > label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.pst .pst-form input:not([type='file']),
+.pst .pst-form textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line-2);
+  border-radius: 0.5rem;
+  background: var(--bg);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.pst .pst-form textarea {
+  min-height: 16rem;
+  resize: vertical;
+}
+
+.pst .pst-form input:focus,
+.pst .pst-form textarea:focus {
+  border-color: var(--ink);
+  outline: none;
+}
+
+.pst .pst-file {
+  position: relative;
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pst .pst-file input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pst .pst-error {
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+.pst .pst-danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.pst .pst-remove {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--mut);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.pst .pst-remove:hover {
+  color: var(--red);
+  text-decoration: underline;
+}
+
+.ws .chip-select select {
+  max-width: 11rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}

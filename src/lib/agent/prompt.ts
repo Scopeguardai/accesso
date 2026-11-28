@@ -17,7 +17,7 @@ function skill(name: string): string {
   return fs.readFileSync(file, 'utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').trim();
 }
 
-export function systemPrompt(brand: Brand): string {
+export function systemPrompt(brand: Brand, styles = ''): string {
   const palettes = Object.entries(brand.palettes)
     .map(([name, p]) => `- ${name}: ${p.label}${name === brand.defaultPalette ? ' (default)' : ''}`)
     .join('\n');
@@ -53,7 +53,7 @@ ${images}
 <layouts>
 ${layouts}
 </layouts>
-
+${styles ? `\n<presentation_styles>\n${styles}\n</presentation_styles>\n` : ''}
 <skill name="content-flow">
 ${skill('content-flow')}
 </skill>
