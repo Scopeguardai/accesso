@@ -514,6 +514,15 @@ export default function DesignView({
             </li>
           ))}
         </ul>
+        <p className="ds-nav-title ds-nav-brands">Also in this design system</p>
+        <ul>
+          <li>
+            <a href={`/design?brand=${saved.id}&tab=styles`}>Presentation styles</a>
+          </li>
+          <li>
+            <a href={`/design?brand=${saved.id}&tab=knowledge`}>Knowledge base</a>
+          </li>
+        </ul>
         <p className="ds-nav-title ds-nav-brands">Brands</p>
         <ul>
           {brands.map((b) => (

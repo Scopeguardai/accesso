@@ -22,7 +22,6 @@ import SettingsMenu from './SettingsMenu';
 import Switcher from './Switcher';
 import Thread from './Thread';
 import {
-  IconBook,
   IconCheck,
   IconClose,
   IconDesktop,
@@ -131,6 +130,15 @@ export default function Workspace({
   const frameRef = useRef<HTMLIFrameElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const brand = brands.find((b) => b.id === brandId) ?? brands[0];
+
+  /** Move between the three parts of a brand's design system. */
+  function openPart(part: 'brand' | 'styles' | 'knowledge') {
+    const base = `/design?brand=${encodeURIComponent(brandId)}`;
+    if (part === 'brand') return router.push(base);
+    if (section !== 'knowledge') return router.push(`${base}&tab=${part}`);
+    setKbTab(part === 'styles' ? 'styles' : 'facts');
+    window.history.replaceState(null, '', `${base}&tab=${part}`);
+  }
   const section = view ?? (initialDeck ? 'deck' : 'new');
   const working = deck?.status === 'generating';
   const busy = working || sending;
@@ -311,25 +319,33 @@ export default function Workspace({
             </>
           ) : (
             <>
-              {section === 'knowledge' && (
+              {(section === 'knowledge' || section === 'design') && (
                 <span className="top-page">
-                  Knowledge base
-                  {kbTab === 'facts' && <span className="top-count">{kbCount === 1 ? '1 entry' : `${kbCount} entries`}</span>}
+                  <span>
+                    <span className="top-brand">{brand?.name}</span> design system
+                  </span>
+                  {section === 'knowledge' && kbTab === 'facts' && (
+                    <span className="top-count">{kbCount === 1 ? '1 entry' : `${kbCount} entries`}</span>
+                  )}
                 </span>
               )}
-              {section === 'design' && <span className="top-page">Design system</span>}
               <span className="grow" />
             </>
           )}
 
-          {section === 'knowledge' && (
-            <div className="seg" role="group" aria-label="Part of the knowledge base">
-              <button type="button" aria-pressed={kbTab === 'facts'} onClick={() => setKbTab('facts')}>
-                Facts
+          {(section === 'knowledge' || section === 'design') && (
+            <div className="seg" role="group" aria-label="Part of the design system">
+              <button type="button" aria-pressed={section === 'design'} onClick={() => openPart('brand')}>
+                <span className="label-long">Brand design</span>
+                <span className="label-short">Brand</span>
               </button>
-              <button type="button" aria-pressed={kbTab === 'styles'} onClick={() => setKbTab('styles')}>
+              <button type="button" aria-pressed={section === 'knowledge' && kbTab === 'styles'} onClick={() => openPart('styles')}>
                 <span className="label-long">Presentation styles</span>
                 <span className="label-short">Styles</span>
+              </button>
+              <button type="button" aria-pressed={section === 'knowledge' && kbTab === 'facts'} onClick={() => openPart('knowledge')}>
+                <span className="label-long">Knowledge base</span>
+                <span className="label-short">Knowledge</span>
               </button>
             </div>
           )}
@@ -402,19 +418,12 @@ export default function Workspace({
           )}
           {section === 'new' && (
             <>
-              <Link href={`/design?brand=${encodeURIComponent(brandId)}`} className="btn-quiet top-wide" title="The brand the agent designs with">
+              <Link href={`/design?brand=${encodeURIComponent(brandId)}`} className="btn-quiet top-wide" title="The brand’s design, presentation styles and knowledge base">
                 <IconPalette />
                 Design system
               </Link>
-              <Link href={`/knowledge?brand=${encodeURIComponent(brandId)}`} className="btn-quiet top-wide" title="What the agent knows">
-                <IconBook />
-                Knowledge base
-              </Link>
               <Link href={`/design?brand=${encodeURIComponent(brandId)}`} className="icon-btn top-narrow" aria-label="Design system" title="Design system">
                 <IconPalette />
-              </Link>
-              <Link href={`/knowledge?brand=${encodeURIComponent(brandId)}`} className="icon-btn top-narrow" aria-label="Knowledge base" title="Knowledge base">
-                <IconBook />
               </Link>
             </>
           )}

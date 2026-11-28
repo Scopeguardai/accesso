@@ -687,3 +687,20 @@
   font-size: 0.8125rem;
   text-decoration: underline;
 }
+
+.top-page .top-brand {
+  font-weight: 600;
+}
+
+/* On a phone the top bar holds the three parts of the design system; the switch between
+   the list of entries and the open entry floats at the bottom instead. */
+@media (max-width: 820px) {
+  .cv .top .kb-tabs {
+    position: fixed;
+    left: 50%;
+    bottom: 0.9rem;
+    z-index: 6;
+    translate: -50% 0;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 0.16);
+  }
+}

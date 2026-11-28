@@ -115,7 +115,9 @@ export default function KnowledgeView({
     keepNotice.current = false;
     setConfirmDelete(false);
     const url =
-      selected && selected !== 'new' ? `/knowledge?entry=${encodeURIComponent(selected)}` : `/knowledge?brand=${encodeURIComponent(brandId)}`;
+      selected && selected !== 'new'
+        ? `/design?brand=${encodeURIComponent(brandId)}&tab=knowledge&entry=${encodeURIComponent(selected)}`
+        : `/design?brand=${encodeURIComponent(brandId)}&tab=knowledge`;
     window.history.replaceState(null, '', url);
     if (!selected || selected === 'new') {
       setDetail(null);

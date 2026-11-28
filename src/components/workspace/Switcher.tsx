@@ -53,9 +53,9 @@ export default function Switcher({ decks, activeId }: { decks: DeckSummary[]; ac
             <IconPlus />
             New presentation
           </Link>
-          <Link href="/knowledge" className="switch-row">
+          <Link href="/design" className="switch-row">
             <IconBook />
-            Knowledge base
+            Design system
           </Link>
           {sorted.length > 0 && <p className="switch-head">Presentations</p>}
           <ul>

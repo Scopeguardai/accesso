@@ -1,34 +1,13 @@
-import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import Workspace from '@/components/workspace/Workspace';
-import { listDecks, summarize } from '@/lib/deck/store';
-import { listKnowledge, summarizeEntry } from '@/lib/knowledge/search';
-import { brandOptions } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Knowledge base · Voila' };
 
+/** The knowledge base now sits inside each brand's design system; old links are sent there. */
 export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ entry?: string; brand?: string; tab?: string }> }) {
   const { entry, brand, tab } = await searchParams;
-  const brands = brandOptions();
-  if (brands.length === 0) redirect('/');
-  // An entry path starts with its brand's folder, e.g. "fossefall/positioning.md".
-  const fromEntry = entry?.split('/')[0];
-  const brandId = brands.find((b) => b.id === fromEntry)?.id ?? brands.find((b) => b.id === brand)?.id ?? brands[0]?.id;
-  const knowledge = brandId ? listKnowledge(brandId).map(summarizeEntry) : [];
-  const validEntry = entry && knowledge.some((k) => k.path === entry) ? entry : undefined;
-  return (
-    <Workspace
-      renderedAt={Date.now()}
-      key="knowledge"
-      view="knowledge"
-      brands={brands}
-      decks={listDecks().map(summarize)}
-      deck={null}
-      knowledge={knowledge}
-      entry={validEntry}
-      brandId={brandId}
-      kbTab={tab === 'styles' ? 'styles' : 'facts'}
-    />
-  );
+  const params = new URLSearchParams();
+  if (brand) params.set('brand', brand);
+  params.set('tab', tab === 'styles' ? 'styles' : 'knowledge');
+  if (entry) params.set('entry', entry);
+  redirect(`/design?${params.toString()}`);
 }

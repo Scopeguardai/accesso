@@ -89,7 +89,7 @@ function Steps({
                   </button>
                 ) : s.kind === 'read' && s.ref ? (
                   <Link
-                    href={`/knowledge?entry=${encodeURIComponent(s.ref)}`}
+                    href={`/design?tab=knowledge&entry=${encodeURIComponent(s.ref)}`}
                     className="link"
                     title="Open in the knowledge base"
                   >

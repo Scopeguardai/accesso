@@ -50,6 +50,9 @@ First brand: **Fossefall**.
   chosen gets Clean. The looks live at the end of `src/components/deck.css`; the choice is
   `design` in `brand.json` (`src/lib/brand/looks.ts`). The agent that studies example
   presentations also suggests the closest look.
+- **One design system per brand** (`/design?brand=`). Three tabs in the top bar: Brand design
+  (everything below), Presentation styles (`&tab=styles`) and Knowledge base (`&tab=knowledge`,
+  `&entry=` opens an entry). Nothing is shared between brands. `/knowledge` links redirect here.
 - **Design system.** The brand the agent designs with: logo, colour palettes, fonts, images,
   brand rules and example briefs. Colours and text are edited on the page and saved together;
   logo, font and image files are uploaded or removed one at a time. Uploaded logos are

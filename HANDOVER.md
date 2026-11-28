@@ -38,6 +38,7 @@ breaking changes: read `node_modules/next/dist/docs/` before writing Next code).
 | PNG/JPG logo converter | Logo section of the design system; `src/lib/brand/trace.ts` (sharp + potrace); returns a colour SVG and a one-colour SVG, nothing saved until chosen |
 | Style from example presentations | Styles tab; `src/lib/knowledge/examples.ts` (PDF pages rendered with unpdf + @napi-rs/canvas, .pptx read with fflate), `style-agent.ts`; uploads go in 8 MB pieces. Not yet run with a real key |
 | Deck designs | Five looks chosen per brand (`src/lib/brand/looks.ts`, end of `deck.css`, Deck design section with live preview at `/design/preview`); the example-study agent suggests one. New looks are added as `[data-look]` rules; the slide markup is shared |
+| One design system per brand | `/design` serves three tabs (brand design, presentation styles, knowledge base); `/knowledge` redirects there. The owner wants everything about a brand in this one place |
 
 Key files added in this stretch: `src/lib/brand/{assets,design,create,import,import-source,pdf-graphics}.ts`,
 `src/app/api/{brands,design,login}/`, `src/components/workspace/DesignView.tsx` + `design.css`,
