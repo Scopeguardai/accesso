@@ -7,10 +7,11 @@ First brand: **Fossefall**.
 
 ## What works today
 
-- **Front page** (`/`). Set up a brand in one of three ways: add the assets yourself, upload
-  brand guidelines, or use the brand's website. Underneath, every brand with what is left to
-  add and buttons to make a presentation or open its design system. Delete on a card moves the
-  brand, its knowledge base and its presentations to `data/trash/`; Recently deleted puts them back.
+- **Front page** (`/`). Set up a brand in one of four ways: add the assets yourself, upload
+  brand guidelines, use a brand folder (a folder or zip of the client's files), or use the
+  brand's website. Underneath, every brand with what is left to add and buttons to make a
+  presentation or open its design system. Delete on a card moves the brand, its knowledge base,
+  brand folder and presentations to `data/trash/`; Recently deleted puts them back.
 - **Sign-in.** Set `ACCESSO_PASSWORD` in `.env.local` and every page and API needs that one
   team password; the cookie lasts 30 days and changing the password signs everyone out.
   Wrong guesses are limited to eight per ten minutes. With no password set the app is open.
@@ -43,6 +44,11 @@ First brand: **Fossefall**.
   With no guidelines, paste the brand's website instead: the colours and typefaces its styling
   uses most are read out for the agent, and every SVG drawing on the page is offered in the same
   gallery, the header logo first. It needs the API key; images and font files are still uploaded by hand.
+  "Brand folder" holds the client's own files (kept in `data/sources/<brand>`, never committed).
+  "Find the brand assets" starts an agent that can only list the folder, read its documents and
+  look at its logos and photos; it picks the wordmark, symbol, fonts and photos (with notes) and,
+  if a document states them, proposes colours and rules. Every pick is used only when someone
+  clicks it. Illustrator, Photoshop and similar files are skipped with a reason.
   "New brand" creates another brand with a placeholder logo, starter colours, fonts and rules,
   and the page lists what still needs the brand's own material.
 

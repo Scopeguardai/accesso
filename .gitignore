@@ -16,6 +16,10 @@ AGENTS.md
 
 # Draft proposals from reading brand guidelines
 brands/*/import.json
+brands/*/folder.json
+
+# Clients' brand folders: their own files, never committed
+data/sources/
 
 # Deleted brands, kept so they can be restored
 data/trash/

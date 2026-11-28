@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.330",
+    "fflate": "^0.8.3",
     "next": "^16.4.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "sharp": "^0.35.5",
     "unpdf": "^2.2.3",
     "zod": "^4.6.7"
   },

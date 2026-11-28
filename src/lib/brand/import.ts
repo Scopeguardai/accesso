@@ -45,7 +45,7 @@ export type ImportState =
   | { status: 'none' }
   | { status: 'working'; source: string; startedAt: string; logos?: FoundLogo[] }
   | { status: 'error'; source: string; error: string; logos?: FoundLogo[] }
-  | { status: 'ready'; source: string; kind?: 'pdf' | 'site'; finishedAt: string; proposal: Proposal; logos?: FoundLogo[] };
+  | { status: 'ready'; source: string; kind?: 'pdf' | 'site' | 'folder'; finishedAt: string; proposal: Proposal; logos?: FoundLogo[] };
 
 const fileOf = (brandId: string) => path.join(BRANDS_DIR, safeId(brandId), 'import.json');
 
@@ -92,6 +92,11 @@ function writeImport(brandId: string, state: ImportState) {
   const tmp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, `${JSON.stringify(state, null, 2)}\n`);
   fs.renameSync(tmp, file);
+}
+
+/** Keep a proposal worked out elsewhere (from the brand folder), shown and applied like any other. */
+export function saveProposal(brandId: string, source: string, proposal: Proposal) {
+  writeImport(brandId, { status: 'ready', source, kind: 'folder', finishedAt: new Date().toISOString(), proposal: proposalSchema.parse(proposal) });
 }
 
 export function clearImport(brandId: string) {

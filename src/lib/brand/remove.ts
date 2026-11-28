@@ -3,7 +3,9 @@ import path from 'node:path';
 import { isRunning } from '../agent/run';
 import { listDecks } from '../deck/store';
 import { BRANDS_DIR, DECKS_DIR, KNOWLEDGE_DIR, ROOT, safeId } from '../paths';
+import { isSearching } from './folder-agent';
 import { isImporting } from './import';
+import { SOURCES_DIR } from './sources';
 import { clearBrandCache, listBrands, loadBrand } from './load';
 
 /**
@@ -63,7 +65,7 @@ export function brandFootprint(brandId: string) {
 export function deleteBrand(brandId: string): TrashItem {
   if (!listBrands().includes(brandId)) throw new RemoveError('That brand no longer exists.');
   const id = safeId(brandId);
-  if (isImporting(id)) throw new RemoveError('The agent is reading guidelines for this brand. Wait for it to finish, then delete.');
+  if (isImporting(id) || isSearching(id)) throw new RemoveError('The agent is reading material for this brand. Wait for it to finish, then delete.');
   const { decks } = brandFootprint(id);
   if (decks.some((d) => isRunning(d))) {
     throw new RemoveError('The agent is working on one of this brand’s presentations. Wait for it to finish, then delete.');
@@ -86,6 +88,7 @@ export function deleteBrand(brandId: string): TrashItem {
       ...decks.map((d): [string, string] => [path.join(DECKS_DIR, `${d}.json`), path.join(into, 'decks', `${d}.json`)]),
       [path.join(KNOWLEDGE_DIR, id), path.join(into, 'knowledge')],
       [path.join(PUBLIC_BRANDS, id), path.join(into, 'public')],
+      [path.join(SOURCES_DIR, id), path.join(into, 'sources')],
       [path.join(BRANDS_DIR, id), path.join(into, 'brand')],
     ]);
   } catch (err) {
@@ -140,6 +143,7 @@ export function restoreBrand(trashId: string): string {
     [path.join(from, 'brand'), path.join(BRANDS_DIR, id)],
     [path.join(from, 'public'), path.join(PUBLIC_BRANDS, id)],
     [path.join(from, 'knowledge'), path.join(KNOWLEDGE_DIR, id)],
+    [path.join(from, 'sources'), path.join(SOURCES_DIR, id)],
     ...decks.map((d): [string, string] => [path.join(from, 'decks', `${d}.json`), path.join(DECKS_DIR, `${d}.json`)]),
   ]);
   fs.rmSync(from, { recursive: true, force: true });

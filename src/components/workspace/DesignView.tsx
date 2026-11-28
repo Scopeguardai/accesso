@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { cssFontFormat, MAX_IMAGES, MAX_PALETTES } from '@/lib/brand/assets';
 import type { ColourRole, DesignData } from '@/lib/brand/design';
 import type { ImportState } from '@/lib/brand/import';
+import BrandFolder from './BrandFolder';
 import { useAutosize } from './Composer';
 import './design.css';
 
@@ -32,6 +33,7 @@ const PAIRS: { text: ColourRole; on: ColourRole; label: string }[] = [
 
 const SECTIONS = [
   ['import', 'From guidelines'],
+  ['folder', 'Brand folder'],
   ['details', 'Brand details'],
   ['logo', 'Logo'],
   ['colours', 'Colour palettes'],
@@ -180,6 +182,11 @@ export default function DesignView({
     // Runs on opening the page and again each time a reading starts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [impApi, imp.status === 'working']);
+
+  const reloadImport = useCallback(async () => {
+    const res = await fetch(impApi, { cache: 'no-store' }).catch(() => null);
+    if (res?.ok) setImp(await res.json());
+  }, [impApi]);
 
   async function startImport(fields: { file?: File; url?: string }) {
     setBusy('import');
@@ -747,6 +754,8 @@ export default function DesignView({
             </article>
           )}
         </section>
+
+        <BrandFolder brand={saved.id} onDesign={syncAssets} onProposal={reloadImport} />
 
         <section id="ds-details" className="ds-sec">
           <h2>Brand details</h2>

@@ -12,6 +12,8 @@ import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
 import { designData } from '../src/lib/brand/design';
 import { deleteBrand, listTrash, restoreBrand, TRASH_DIR } from '../src/lib/brand/remove';
+import { addFiles, clearFiles, documentText, fontNames, fontWeight, listFiles, previewImage, readFile, SOURCES_DIR } from '../src/lib/brand/sources';
+import { cleanPath } from '../src/lib/brand/source-types';
 import { proposalSchema, readImport } from '../src/lib/brand/import';
 import { pdfGraphics } from '../src/lib/brand/pdf-graphics';
 import { checkPublicUrl, cssColours, htmlToText, pdfText, siteFromHtml, SourceError } from '../src/lib/brand/import-source';
@@ -336,6 +338,58 @@ void (async () => {
   assert.ok(drawings.every((d) => d.from === 'page 1' && sanitizeSvg(d.svg, 'Logo').includes('<path')));
   passed += 1;
   console.log('ok  guidelines and websites are read only from real PDFs and public links, and proposals are checked');
+
+  // A brand folder: zips unpack, unusable and disguised files are left out with a reason, paths stay inside.
+  {
+    const { zipSync, strToU8 } = await import('fflate');
+    const id = 'fossefall';
+    const logo = fs.readFileSync(path.join(ROOT, 'public', 'brands', 'fossefall', 'logo', 'wordmark.svg'));
+    const font = fs.readFileSync(path.join(ROOT, 'public', 'brands', 'fossefall', 'fonts', 'Inter-Variable.ttf'));
+    const photo = fs.readFileSync(path.join(ROOT, 'public', 'brands', 'fossefall', 'images', 'lichen.jpg'));
+    const docx = Buffer.from(
+      zipSync({ 'word/document.xml': strToU8('<w:document><w:body><w:p><w:r><w:t>Primary colour #1B1F1A</w:t></w:r></w:p><w:p><w:t>Use Inter.</w:t></w:p></w:body></w:document>') }),
+    );
+    const zip = Buffer.from(
+      zipSync({
+        'Pack/Logos/mark.svg': new Uint8Array(logo),
+        'Pack/Old logo.ai': strToU8('%!PS-Adobe'),
+        '__MACOSX/Pack/._mark.svg': strToU8('x'),
+        'Pack/../escape.svg': new Uint8Array(logo),
+      }),
+    );
+    try {
+      assert.equal(cleanPath('a/../b.svg'), null);
+      assert.equal(cleanPath('.hidden/x.svg'), null);
+      assert.equal(cleanPath('Brand/Logos/main.svg'), 'Brand/Logos/main.svg');
+      const r = await addFiles(id, [
+        { path: 'Brand/Logos/wordmark.svg', bytes: logo },
+        { path: 'Brand/Fonts/Inter-Variable.ttf', bytes: font },
+        { path: 'Brand/Photos/lichen.jpg', bytes: photo },
+        { path: 'Brand/Photos/fake.jpg', bytes: Buffer.from('not a photo') },
+        { path: 'Brand/Notes.docx', bytes: docx },
+        { path: 'Brand/Logo.eps', bytes: Buffer.from('x') },
+        { path: 'Brand/.DS_Store', bytes: Buffer.from('x') },
+        { path: 'pack.zip', bytes: zip },
+      ]);
+      assert.deepEqual(r.added.sort(), ['Brand/Fonts/Inter-Variable.ttf', 'Brand/Logos/wordmark.svg', 'Brand/Notes.docx', 'Brand/Photos/lichen.jpg', 'Pack/Logos/mark.svg']);
+      assert.deepEqual(r.skipped.map((x) => x.path).sort(), ['Brand/Logo.eps', 'Brand/Photos/fake.jpg', 'Pack/Old logo.ai']);
+      assert.ok(!fs.existsSync(path.join(SOURCES_DIR, 'escape.svg')) && !fs.existsSync(path.join(ROOT, 'data', 'escape.svg')));
+      assert.equal(listFiles(id).length, 5);
+      assert.deepEqual(fontNames(readFile(id, 'Brand/Fonts/Inter-Variable.ttf')).family, 'Inter');
+      assert.equal(fontWeight(readFile(id, 'Brand/Fonts/Inter-Variable.ttf')), '100 900');
+      assert.equal(fontWeight(Buffer.from('x'), 'SemiBold Italic'), '600');
+      assert.match(await documentText(id, 'Brand/Notes.docx'), /Primary colour #1B1F1A\s+Use Inter\./);
+      for (const p of ['Brand/Logos/wordmark.svg', 'Brand/Photos/lichen.jpg']) {
+        const jpeg = await previewImage(id, p, 200);
+        assert.equal(jpeg.subarray(0, 2).toString('hex'), 'ffd8');
+      }
+      assert.throws(() => readFile(id, '../../package.json'));
+    } finally {
+      clearFiles(id);
+    }
+    passed += 1;
+    console.log('ok  a brand folder keeps usable files, explains what it leaves out, and reads fonts, documents and pictures');
+  }
   console.log(`\n${passed} checks passed`);
 })().catch((err) => {
   console.error(err);

@@ -52,7 +52,7 @@
 /* the three ways */
 .lp .lp-ways {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   margin-top: 2rem;
 }
@@ -388,7 +388,13 @@
   width: 100%;
 }
 
-@media (max-width: 46rem) {
+@media (max-width: 62rem) {
+  .lp .lp-ways {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 40rem) {
   .lp .lp-ways {
     grid-template-columns: 1fr;
   }

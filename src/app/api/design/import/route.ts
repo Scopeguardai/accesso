@@ -1,5 +1,6 @@
 import { after, NextResponse } from 'next/server';
 import { beginImport, clearImport, isImporting, readImport, runImport } from '@/lib/brand/import';
+import { isSearching } from '@/lib/brand/folder-agent';
 import { pdfText, SourceError, urlText } from '@/lib/brand/import-source';
 import { listBrands } from '@/lib/brand/load';
 
@@ -21,8 +22,8 @@ export async function POST(request: Request) {
   const form = await request.formData().catch(() => null);
   const brand = String(form?.get('brand') ?? '');
   if (!form || !listBrands().includes(brand)) return noBrand();
-  if (isImporting(brand)) {
-    return NextResponse.json({ error: 'Guidelines are already being read for this brand.' }, { status: 409 });
+  if (isImporting(brand) || isSearching(brand)) {
+    return NextResponse.json({ error: 'The agent is already reading material for this brand. Wait for it to finish.' }, { status: 409 });
   }
   const file = form.get('file');
   const url = String(form.get('url') ?? '').trim();

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRef, useState, type FormEvent } from 'react';
 import VoilaLogo from '@/components/VoilaLogo';
+import { uploadToFolder } from '@/components/workspace/folder-upload';
 import '@/components/workspace/workspace.css';
 import './landing.css';
 
@@ -19,7 +20,7 @@ export type LandingBrand = {
 
 export type DeletedBrand = { id: string; brandId: string; name: string; deletedAt: string; decks: number };
 
-type Way = 'hand' | 'guidelines' | 'website';
+type Way = 'hand' | 'guidelines' | 'website' | 'folder';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const when = (iso: string) => {
@@ -37,6 +38,11 @@ const WAYS: { key: Way; title: string; text: string }[] = [
     key: 'guidelines',
     title: 'Upload brand guidelines',
     text: 'Give a PDF or a link. The agent reads it and proposes the colours, fonts and rules for you to check.',
+  },
+  {
+    key: 'folder',
+    title: 'Use a brand folder',
+    text: 'Choose the client’s folder of brand files, or a zip. The agent searches it for the logo, fonts, photos and guidelines.',
   },
   {
     key: 'website',
@@ -65,6 +71,8 @@ export default function Landing({
   const [link, setLink] = useState('');
   const [site, setSite] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [picked, setPicked] = useState<{ files: File[]; label: string } | null>(null);
+  const [progress, setProgress] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // A brand made on an earlier try whose guidelines could not be read: reused, not made twice.
@@ -77,6 +85,7 @@ export default function Landing({
     if (!brandName) return setError('Give the brand a name.');
     if (way === 'guidelines' && !file && !link.trim()) return setError('Upload the guidelines PDF or paste a link to them.');
     if (way === 'website' && !site.trim()) return setError('Type the website address.');
+    if (way === 'folder' && !picked) return setError('Choose the brand folder or a zip first.');
     setBusy(true);
     setError('');
     try {
@@ -91,6 +100,22 @@ export default function Landing({
         if (!res.ok) throw new Error(data.error ?? 'The brand could not be created. Try again.');
         id = data.id;
         made.current = { name: brandName, id };
+      }
+      if (way === 'folder' && picked) {
+        const { added } = await uploadToFolder(id, picked.files, (sent, total) => setProgress(`Adding ${sent} of ${total} files…`));
+        if (added === 0) {
+          setMadeId(id);
+          throw new Error('Nothing in that folder could be used: Voila needs SVG logos, font files, photos or documents.');
+        }
+        setProgress('Starting the search…');
+        // If the agent cannot start (no API key, say), the brand page says so; the files are kept either way.
+        await fetch('/api/design/sources/search', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ brand: id }),
+        }).catch(() => null);
+        window.location.assign(`/design?brand=${encodeURIComponent(id)}#ds-folder`);
+        return;
       }
       if (way !== 'hand') {
         const form = new FormData();
@@ -108,6 +133,7 @@ export default function Landing({
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
+      setProgress('');
     }
   }
 
@@ -256,6 +282,49 @@ export default function Landing({
               </div>
             )}
 
+            {way === 'folder' && (
+              <div className="lp-field">
+                <span>Brand folder</span>
+                <div className="lp-source">
+                  <label className="btn-quiet lp-file">
+                    Choose a folder
+                    <input
+                      type="file"
+                      multiple
+                      ref={(el) => el?.setAttribute('webkitdirectory', '')}
+                      onChange={(e) => {
+                        const list = Array.from(e.target.files ?? []);
+                        const top = (list[0] as File & { webkitRelativePath?: string })?.webkitRelativePath?.split('/')[0];
+                        setPicked(list.length ? { files: list, label: `${top ?? 'Folder'}: ${list.length} files` } : null);
+                        setError('');
+                      }}
+                    />
+                  </label>
+                  <span className="lp-or">or</span>
+                  <label className="btn-quiet lp-file">
+                    Choose a zip
+                    <input
+                      type="file"
+                      accept=".zip,application/zip"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        setPicked(f ? { files: [f], label: f.name } : null);
+                        setError('');
+                      }}
+                    />
+                  </label>
+                  {picked && (
+                    <span className="lp-chosen">
+                      {picked.label}
+                      <button type="button" onClick={() => setPicked(null)} aria-label="Clear the chosen folder">
+                        Clear
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {way === 'website' && (
               <label className="lp-field">
                 <span>Website</span>
@@ -288,17 +357,23 @@ export default function Landing({
                 {busy
                   ? way === 'hand'
                     ? 'Creating…'
-                    : 'Reading…'
+                    : way === 'folder'
+                      ? progress || 'Adding files…'
+                      : 'Reading…'
                   : way === 'hand'
                     ? 'Create brand'
                     : way === 'guidelines'
                       ? 'Create brand and read guidelines'
-                      : 'Create brand and read website'}
+                      : way === 'folder'
+                        ? 'Create brand and search the folder'
+                        : 'Create brand and read website'}
               </button>
               <span className="lp-hint">
                 {way === 'hand'
                   ? 'It starts with a placeholder logo and starter colours, and a list of what to add.'
-                  : 'Reading takes a minute or two. The proposal waits on the brand’s page for you to check.'}
+                  : way === 'folder'
+                    ? 'Usable files are copied in; Illustrator, Photoshop and similar files are skipped. The agent’s picks wait on the brand’s page.'
+                    : 'Reading takes a minute or two. The proposal waits on the brand’s page for you to check.'}
               </span>
             </div>
           </form>

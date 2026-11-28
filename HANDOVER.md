@@ -32,6 +32,8 @@ breaking changes: read `node_modules/next/dist/docs/` before writing Next code).
 | Guidelines import | PDF upload or link; agent proposes tagline, palettes, font names, rules as a draft to apply and save |
 | Website as identity guide | Reads one page's text and styling; agent proposes a draft |
 | Logo finder | Vector PDF: drawn shapes grouped into a gallery of one-colour SVGs. Website: every SVG on the page. Pick one as wordmark or symbol, or download it |
+| Brand folder | A brand's folder of client files (folder or zip upload, `data/sources/<brand>`); an agent with list/read/view tools picks logo, fonts, photos and proposes colours and rules (`src/lib/brand/sources.ts`, `folder-agent.ts`, `BrandFolder.tsx`) |
+| Delete brand | From its card; moves to `data/trash/`, restorable from Recently deleted |
 
 Key files added in this stretch: `src/lib/brand/{assets,design,create,import,import-source,pdf-graphics}.ts`,
 `src/app/api/{brands,design,login}/`, `src/components/workspace/DesignView.tsx` + `design.css`,
@@ -61,6 +63,14 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 - Shared deck links need the team password. Offered to open `/d/<id>` links; not decided.
 - Logos are one colour and SVG only. Typed (not outlined) wordmarks in a PDF are not found.
 - Decks are JSON files on one machine; agent runs live in the web process.
+
+## Brand folder: next steps
+
+- Google Drive and SharePoint/OneDrive as places the agent can search. Everything that reads the
+  folder goes through `listFiles` and `readFile` in `src/lib/brand/sources.ts`; a cloud source
+  needs the same two functions. Drive: a service account the client folder is shared with.
+  SharePoint: an Entra app registered by the owner's IT with read access to chosen sites.
+- The folder agent has not been run with a real key.
 
 ## Offered and not yet answered
 
