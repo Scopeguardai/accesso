@@ -9,7 +9,8 @@ First brand: **Fossefall**.
 
 - **Front page** (`/`). Set up a brand in one of three ways: add the assets yourself, upload
   brand guidelines, or use the brand's website. Underneath, every brand with what is left to
-  add and buttons to make a presentation or open its design system.
+  add and buttons to make a presentation or open its design system. Delete on a card moves the
+  brand, its knowledge base and its presentations to `data/trash/`; Recently deleted puts them back.
 - **Sign-in.** Set `ACCESSO_PASSWORD` in `.env.local` and every page and API needs that one
   team password; the cookie lasts 30 days and changing the password signs everyone out.
   Wrong guesses are limited to eight per ten minutes. With no password set the app is open.

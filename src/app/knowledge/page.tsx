@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import Workspace from '@/components/workspace/Workspace';
 import { listDecks, summarize } from '@/lib/deck/store';
 import { listKnowledge, summarizeEntry } from '@/lib/knowledge/search';
@@ -10,6 +11,7 @@ export const metadata: Metadata = { title: 'Knowledge base · Accesso' };
 export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ entry?: string }> }) {
   const { entry } = await searchParams;
   const brands = brandOptions();
+  if (brands.length === 0) redirect('/');
   // An entry path starts with its brand's folder, e.g. "fossefall/positioning.md".
   const fromEntry = entry?.split('/')[0];
   const brandId = brands.find((b) => b.id === fromEntry)?.id ?? brands[0]?.id;

@@ -52,7 +52,8 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 - The top-bar logo is hard-coded to Fossefall whichever brand is open (`FossefallLogo.tsx`).
 - The product is called "Accesso" in code, which clashes with the company name. The owner
   asked for name ideas (Deckhand, Throughline, Onbrand were suggested); none chosen yet.
-- No brand deletion. A new brand has an empty knowledge base.
+- A new brand has an empty knowledge base. Deleted brands sit in `data/trash/` (restorable from
+  the front page) and are never emptied automatically.
 - Shared deck links need the team password. Offered to open `/d/<id>` links; not decided.
 - Logos are one colour and SVG only. Typed (not outlined) wordmarks in a PDF are not found.
 - Decks are JSON files on one machine; agent runs live in the web process.

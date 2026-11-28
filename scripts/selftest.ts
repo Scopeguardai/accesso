@@ -11,6 +11,7 @@ import { passwordMatches, passwordSet, safeNext, sessionToken, validSession } fr
 import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand/assets';
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
 import { designData } from '../src/lib/brand/design';
+import { deleteBrand, listTrash, restoreBrand, TRASH_DIR } from '../src/lib/brand/remove';
 import { proposalSchema, readImport } from '../src/lib/brand/import';
 import { pdfGraphics } from '../src/lib/brand/pdf-graphics';
 import { checkPublicUrl, cssColours, htmlToText, pdfText, siteFromHtml, SourceError } from '../src/lib/brand/import-source';
@@ -231,6 +232,37 @@ check('a new brand starts with working starter assets and a list of what to add'
   } finally {
     fs.rmSync(path.join(ROOT, 'brands', id), { recursive: true, force: true });
     fs.rmSync(path.join(ROOT, 'public', 'brands', id), { recursive: true, force: true });
+  }
+});
+
+check('deleting a brand moves it, its knowledge and its presentations aside, and restoring puts them back', () => {
+  const id = createBrand(newBrandSchema.parse({ name: 'Delete Test' }));
+  const sample = readDeck('sample-fossefall')!;
+  const deckId = 'selftest-delete-deck';
+  let trashId = '';
+  try {
+    writeDeck({ ...sample, id: deckId, brand: id, client: id });
+    fs.mkdirSync(path.join(KNOWLEDGE_DIR, id), { recursive: true });
+    fs.writeFileSync(path.join(KNOWLEDGE_DIR, id, 'note.md'), 'x');
+    const item = deleteBrand(id);
+    trashId = item.id;
+    assert.equal(item.decks, 1);
+    assert.ok(!listBrands().includes(id) && !readDeck(deckId));
+    for (const gone of [path.join(ROOT, 'public', 'brands', id), path.join(KNOWLEDGE_DIR, id)]) assert.ok(!fs.existsSync(gone), gone);
+    assert.ok(readDeck('sample-fossefall'), 'other brands\' presentations stay');
+    assert.equal(listTrash()[0]?.brandId, id);
+    assert.equal(restoreBrand(trashId), id);
+    trashId = '';
+    assert.ok(listBrands().includes(id) && readDeck(deckId)?.brand === id);
+    assert.ok(fs.existsSync(path.join(KNOWLEDGE_DIR, id, 'note.md')) && designData(id).name === 'Delete Test');
+    assert.throws(() => deleteBrand('no-such-brand'));
+    assert.throws(() => restoreBrand('../../etc'));
+  } finally {
+    fs.rmSync(path.join(ROOT, 'brands', id), { recursive: true, force: true });
+    fs.rmSync(path.join(ROOT, 'public', 'brands', id), { recursive: true, force: true });
+    fs.rmSync(path.join(KNOWLEDGE_DIR, id), { recursive: true, force: true });
+    fs.rmSync(path.join(DECKS_DIR, `${deckId}.json`), { force: true });
+    if (trashId) fs.rmSync(path.join(TRASH_DIR, trashId), { recursive: true, force: true });
   }
 });
 

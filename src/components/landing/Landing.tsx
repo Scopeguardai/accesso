@@ -17,7 +17,15 @@ export type LandingBrand = {
   proposal: 'none' | 'working' | 'ready' | 'error';
 };
 
+export type DeletedBrand = { id: string; brandId: string; name: string; deletedAt: string; decks: number };
+
 type Way = 'hand' | 'guidelines' | 'website';
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const when = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+};
 
 const WAYS: { key: Way; title: string; text: string }[] = [
   {
@@ -37,7 +45,21 @@ const WAYS: { key: Way; title: string; text: string }[] = [
   },
 ];
 
-export default function Landing({ brands, signIn }: { brands: LandingBrand[]; signIn: boolean }) {
+export default function Landing({
+  brands: initialBrands,
+  trash: initialTrash,
+  signIn,
+}: {
+  brands: LandingBrand[];
+  trash: DeletedBrand[];
+  signIn: boolean;
+}) {
+  const [brands, setBrands] = useState(initialBrands);
+  const [trash, setTrash] = useState(initialTrash);
+  const [confirming, setConfirming] = useState('');
+  const [removing, setRemoving] = useState('');
+  const [listError, setListError] = useState<{ id: string; text: string } | null>(null);
+  const [notice, setNotice] = useState('');
   const [way, setWay] = useState<Way>('hand');
   const [name, setName] = useState('');
   const [link, setLink] = useState('');
@@ -86,6 +108,45 @@ export default function Landing({ brands, signIn }: { brands: LandingBrand[]; si
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
+    }
+  }
+
+  async function removeBrand(b: LandingBrand) {
+    setRemoving(b.id);
+    setListError(null);
+    setNotice('');
+    try {
+      const res = await fetch(`/api/brands?id=${encodeURIComponent(b.id)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'The brand could not be deleted. Try again.');
+      setBrands((list) => list.filter((x) => x.id !== b.id));
+      setTrash((list) => [data as DeletedBrand, ...list]);
+      setConfirming('');
+      setNotice(`${b.name} was deleted. You can restore it under Recently deleted.`);
+    } catch (err) {
+      setListError({ id: b.id, text: (err as Error).message });
+    } finally {
+      setRemoving('');
+    }
+  }
+
+  async function restore(item: DeletedBrand) {
+    setRemoving(item.id);
+    setListError(null);
+    setNotice('');
+    try {
+      const res = await fetch('/api/brands/restore', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ trash: item.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'The brand could not be restored. Try again.');
+      // The card needs the brand's details again, which the page reads fresh.
+      window.location.reload();
+    } catch (err) {
+      setListError({ id: item.id, text: (err as Error).message });
+      setRemoving('');
     }
   }
 
@@ -245,6 +306,12 @@ export default function Landing({ brands, signIn }: { brands: LandingBrand[]; si
 
         <section aria-labelledby="lp-brands" className="lp-brands">
           <h2 id="lp-brands">Your brands</h2>
+          {notice && (
+            <p className="lp-notice" role="status">
+              {notice}
+            </p>
+          )}
+          {brands.length === 0 && <p className="lp-sub">No brands yet. Set one up above to start making presentations.</p>}
           <ul className="lp-grid">
             {brands.map((b) => (
               <li key={b.id} className="lp-brand">
@@ -271,18 +338,85 @@ export default function Landing({ brands, signIn }: { brands: LandingBrand[]; si
                   {' · '}
                   {b.decks === 1 ? '1 presentation' : `${b.decks} presentations`}
                 </p>
-                <div className="lp-actions">
-                  <Link href={`/new?brand=${encodeURIComponent(b.id)}`} className="btn-ink">
-                    Make a presentation
-                  </Link>
-                  <Link href={`/design?brand=${encodeURIComponent(b.id)}`} className="btn-quiet">
-                    Design system
-                  </Link>
-                </div>
+                {confirming === b.id ? (
+                  <div className="lp-confirm" role="group" aria-label={`Delete ${b.name}`}>
+                    <p>
+                      Delete <b>{b.name}</b>?{' '}
+                      {b.decks === 0
+                        ? 'Its files and knowledge base go with it.'
+                        : b.decks === 1
+                          ? 'Its presentation and knowledge base go with it.'
+                          : `Its ${b.decks} presentations and knowledge base go with it.`}{' '}
+                      You can restore it afterwards.
+                    </p>
+                    <div className="lp-actions">
+                      <button type="button" className="lp-danger" disabled={removing === b.id} onClick={() => removeBrand(b)}>
+                        {removing === b.id ? 'Deleting…' : 'Delete brand'}
+                      </button>
+                      <button type="button" className="btn-quiet" disabled={removing === b.id} onClick={() => setConfirming('')}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="lp-actions">
+                    <Link href={`/new?brand=${encodeURIComponent(b.id)}`} className="btn-ink">
+                      Make a presentation
+                    </Link>
+                    <Link href={`/design?brand=${encodeURIComponent(b.id)}`} className="btn-quiet">
+                      Design system
+                    </Link>
+                    <button
+                      type="button"
+                      className="lp-delete"
+                      onClick={() => {
+                        setConfirming(b.id);
+                        setListError(null);
+                        setNotice('');
+                      }}
+                      aria-label={`Delete ${b.name}`}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+                {listError?.id === b.id && (
+                  <p className="lp-error" role="alert">
+                    {listError.text}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
         </section>
+
+        {trash.length > 0 && (
+          <section aria-labelledby="lp-trash" className="lp-trash">
+            <h2 id="lp-trash">Recently deleted</h2>
+            <ul>
+              {trash.map((t) => (
+                <li key={t.id}>
+                  <span>
+                    <b>{t.name}</b>
+                    <span className="lp-hint">
+                      {' '}
+                      deleted {when(t.deletedAt)}
+                      {t.decks > 0 ? `, with ${plural(t.decks, 'presentation', 'presentations')}` : ''}
+                    </span>
+                  </span>
+                  <button type="button" className="btn-quiet" disabled={removing === t.id} onClick={() => restore(t)}>
+                    {removing === t.id ? 'Restoring…' : 'Restore'}
+                  </button>
+                  {listError?.id === t.id && (
+                    <p className="lp-error" role="alert">
+                      {listError.text}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </main>
     </div>
   );

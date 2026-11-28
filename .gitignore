@@ -16,3 +16,6 @@ AGENTS.md
 
 # Draft proposals from reading brand guidelines
 brands/*/import.json
+
+# Deleted brands, kept so they can be restored
+data/trash/

@@ -3,6 +3,7 @@ import { passwordSet } from '@/lib/auth';
 import { designData } from '@/lib/brand/design';
 import { readImport } from '@/lib/brand/import';
 import { listBrands } from '@/lib/brand/load';
+import { listTrash } from '@/lib/brand/remove';
 import { listDecks } from '@/lib/deck/store';
 
 export const dynamic = 'force-dynamic';
@@ -24,5 +25,5 @@ export default async function Home() {
       proposal: readImport(id).status,
     };
   });
-  return <Landing brands={brands} signIn={passwordSet()} />;
+  return <Landing brands={brands} trash={listTrash().slice(0, 12)} signIn={passwordSet()} />;
 }
