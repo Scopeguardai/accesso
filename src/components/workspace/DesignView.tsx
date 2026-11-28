@@ -156,6 +156,8 @@ export default function DesignView({
   const [impUrl, setImpUrl] = useState('');
   const [impError, setImpError] = useState('');
   const [impApplied, setImpApplied] = useState(false);
+  const [traced, setTraced] = useState<{ colour: string; mono: string; colours: string[]; notes: string[]; name: string } | null>(null);
+  const [tracedAs, setTracedAs] = useState<'colour' | 'mono'>('colour');
   const [impPick, setImpPick] = useState(0);
   const impLogos = imp.status === 'none' ? [] : (imp.logos ?? []);
   const impApi = `/api/design/import?brand=${encodeURIComponent(initial.id)}`;
@@ -210,6 +212,33 @@ export default function DesignView({
       setImp({ status: 'none' });
       setImpApplied(false);
     }
+  }
+
+  /** Turn a PNG or JPG logo into SVG, and show both versions to choose from. */
+  async function convertLogo(file: File) {
+    if (file.size > 12_000_000) return setNotice({ where: 'trace', text: 'That picture is too large. Use one under 12 MB.', tone: 'error' });
+    setBusy('trace');
+    setNotice(null);
+    setTraced(null);
+    try {
+      const form = new FormData();
+      form.set('file', file);
+      const res = await fetch('/api/design/trace', { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'That picture could not be converted. Try again.');
+      setTraced({ ...data, name: file.name.replace(/\.\w+$/, '') });
+      setTracedAs('colour');
+    } catch (err) {
+      setNotice({ where: 'trace', text: (err as Error).message, tone: 'error' });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function applyTraced(which: 'wordmark' | 'mark') {
+    if (!traced) return;
+    const file = new File([traced[tracedAs]], `${traced.name}.svg`, { type: 'image/svg+xml' });
+    void upload(which, which === 'wordmark' ? 'Wordmark replaced.' : 'Symbol replaced.', { kind: which, file });
   }
 
   /** Use the logo found on the website. It goes through the same checks as an uploaded logo. */
@@ -821,6 +850,84 @@ export default function DesignView({
             Upload SVG files. A logo with no colour of its own takes its colour from the slide, so one file works on
             every background. Uploads are saved straight away.
           </p>
+
+          <div className="ds-convert">
+            <h3>Only have a PNG or JPG?</h3>
+            <p className="ds-note">
+              Convert it. The logo&rsquo;s shapes are traced into an SVG, in its own colours and in one colour, and you
+              choose which to use. Best with a flat logo on a transparent or plain background.
+            </p>
+            <div className="ds-actions">
+              <FileButton
+                label={traced ? 'Convert another picture' : 'Convert a PNG or JPG logo'}
+                accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                busy={busy === 'trace'}
+                onFile={convertLogo}
+              />
+            </div>
+            {note('trace')}
+            {traced && (
+              <article className="ds-prop" aria-label="Converted logo">
+                <div className="ds-traced" role="radiogroup" aria-label="Which version to use">
+                  {(['colour', 'mono'] as const).map((v) => (
+                    <button key={v} type="button" role="radio" aria-checked={tracedAs === v} className="ds-traced-opt" onClick={() => setTracedAs(v)}>
+                      <span className="ds-traced-tiles">
+                        <span style={{ background: def.colours.paper, color: def.colours.ink }} dangerouslySetInnerHTML={{ __html: traced[v] }} />
+                        <span style={{ background: def.colours.dark, color: def.colours.onDark }} dangerouslySetInnerHTML={{ __html: traced[v] }} />
+                      </span>
+                      <b>{v === 'colour' ? 'In its own colours' : 'In one colour'}</b>
+                      <span className="ds-prop-hint">
+                        {v === 'colour'
+                          ? 'Keeps these colours on every slide, light or dark.'
+                          : 'Takes its colour from the slide, so it stays readable on any background.'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="ds-traced-colours">
+                  <span className="ds-prop-label">Colours found</span>
+                  {traced.colours.map((c) => (
+                    <span key={c}>
+                      <i style={{ background: c }} aria-hidden="true" />
+                      {c}
+                    </span>
+                  ))}
+                </p>
+                {traced.notes.length > 0 && (
+                  <ul className="ds-prop-list">
+                    {traced.notes.map((n) => (
+                      <li key={n}>{n}</li>
+                    ))}
+                  </ul>
+                )}
+                <div className="ds-add-actions">
+                  <button type="button" className="btn-ink" disabled={busy !== null} onClick={() => applyTraced('wordmark')}>
+                    Use as the wordmark
+                  </button>
+                  <button type="button" className="btn-quiet" disabled={busy !== null} onClick={() => applyTraced('mark')}>
+                    Use as the symbol
+                  </button>
+                  <a
+                    className="btn-quiet"
+                    download={`${traced.name}-${tracedAs === 'colour' ? 'colour' : 'one-colour'}.svg`}
+                    href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+                      tracedAs === 'mono' ? traced.mono.replace('currentColor', '#111111') : traced.colour,
+                    )}`}
+                  >
+                    Download SVG
+                  </a>
+                  <button type="button" className="btn-quiet" onClick={() => setTraced(null)}>
+                    Close
+                  </button>
+                </div>
+                <p className="ds-prop-hint">
+                  The two tiles show the logo on this brand&rsquo;s light and dark backgrounds. If the coloured version is
+                  hard to see on dark, use the one-colour version. A traced logo is close to the original, not identical:
+                  if the client has the original SVG, use that.
+                </p>
+              </article>
+            )}
+          </div>
         </section>
 
         <section id="ds-colours" className="ds-sec">

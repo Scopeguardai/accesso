@@ -35,6 +35,7 @@ breaking changes: read `node_modules/next/dist/docs/` before writing Next code).
 | Brand folder | A brand's folder of client files (folder or zip upload, `data/sources/<brand>`); an agent with list/read/view tools picks logo, fonts, photos and proposes colours and rules (`src/lib/brand/sources.ts`, `folder-agent.ts`, `BrandFolder.tsx`) |
 | Delete brand | From its card; moves to `data/trash/`, restorable from Recently deleted |
 | Presentation styles | Knowledge base tab; `src/lib/knowledge/styles.ts`, `StylesView.tsx`; the brief carries `style`; guidance is added to the agent's system prompt in `run.ts` |
+| PNG/JPG logo converter | Logo section of the design system; `src/lib/brand/trace.ts` (sharp + potrace); returns a colour SVG and a one-colour SVG, nothing saved until chosen |
 
 Key files added in this stretch: `src/lib/brand/{assets,design,create,import,import-source,pdf-graphics}.ts`,
 `src/app/api/{brands,design,login}/`, `src/components/workspace/DesignView.tsx` + `design.css`,
@@ -62,7 +63,7 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 - A new brand has an empty knowledge base. Deleted brands sit in `data/trash/` (restorable from
   the front page) and are never emptied automatically.
 - Shared deck links need the team password. Offered to open `/d/<id>` links; not decided.
-- Logos are one colour and SVG only. Typed (not outlined) wordmarks in a PDF are not found.
+- A logo with its own colours keeps them on every slide, dark ones included; offered but not built: colour on light backgrounds and one colour on dark, automatically. Logos found in PDFs come out in one colour. Typed (not outlined) wordmarks in a PDF are not found.
 - Decks are JSON files on one machine; agent runs live in the web process.
 
 ## Upload size in the codespace

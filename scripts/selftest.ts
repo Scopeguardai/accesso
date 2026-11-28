@@ -14,6 +14,7 @@ import { designData } from '../src/lib/brand/design';
 import { deleteBrand, listTrash, restoreBrand, TRASH_DIR } from '../src/lib/brand/remove';
 import { addFiles, clearFiles, documentText, fontNames, fontWeight, listFiles, previewImage, readFile, SOURCES_DIR } from '../src/lib/brand/sources';
 import { cleanPath } from '../src/lib/brand/source-types';
+import { traceLogo } from '../src/lib/brand/trace';
 import { proposalSchema, readImport } from '../src/lib/brand/import';
 import { pdfGraphics } from '../src/lib/brand/pdf-graphics';
 import { checkPublicUrl, cssColours, htmlToText, pdfText, siteFromHtml, SourceError } from '../src/lib/brand/import-source';
@@ -415,6 +416,33 @@ void (async () => {
     }
     passed += 1;
     console.log('ok  a brand folder keeps usable files, explains what it leaves out, and reads fonts, documents and pictures');
+  }
+
+  // A PNG logo becomes SVG twice: in its own colours, and in one colour that follows the slide.
+  {
+    const sharp = (await import('sharp')).default;
+    const art = (bg: string) =>
+      Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200">${bg}<circle cx="100" cy="100" r="70" fill="#E4572E"/><rect x="200" y="60" width="300" height="80" fill="#17325C"/><rect x="200" y="150" width="200" height="12" fill="#F2B544"/></svg>`,
+      );
+    for (const [name, png] of [
+      ['white background', await sharp(art('<rect width="600" height="200" fill="#fff"/>')).resize(600).png().toBuffer()],
+      ['transparent', await sharp(art('')).resize(600).png().toBuffer()],
+      ['jpeg', await sharp(art('<rect width="600" height="200" fill="#fff"/>')).resize(600).jpeg({ quality: 80 }).toBuffer()],
+    ] as const) {
+      const t = await traceLogo(png);
+      assert.equal(t.colours.length, 3, `${name}: three colours, not the soft edges between them`);
+      const near = (hex: string, r: number, g: number, b: number) =>
+        Math.abs(parseInt(hex.slice(1, 3), 16) - r) + Math.abs(parseInt(hex.slice(3, 5), 16) - g) + Math.abs(parseInt(hex.slice(5, 7), 16) - b) < 24;
+      assert.ok(t.colours.some((c) => near(c, 0xe4, 0x57, 0x2e)) && t.colours.some((c) => near(c, 0x17, 0x32, 0x5c)) && t.colours.some((c) => near(c, 0xf2, 0xb5, 0x44)), name);
+      assert.equal((t.colour.match(/<path/g) ?? []).length, 3);
+      assert.ok(t.mono.includes('currentColor') && !/#[0-9A-F]{6}/i.test(t.mono.replace(/xmlns="[^"]*"/, '')), `${name}: the one-colour version carries no colour of its own`);
+      assert.ok(!/script|image|href/i.test(t.colour));
+    }
+    await assert.rejects(traceLogo(fs.readFileSync(path.join(ROOT, 'public', 'brands', 'fossefall', 'images', 'lichen.jpg'))), /plain background/);
+    await assert.rejects(traceLogo(Buffer.from('not a picture')), /not a PNG/);
+    passed += 1;
+    console.log('ok  a PNG or JPG logo is traced into SVG in its own colours and in one colour');
   }
   console.log(`\n${passed} checks passed`);
 })().catch((err) => {

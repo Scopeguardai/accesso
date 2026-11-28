@@ -49,6 +49,8 @@ First brand: **Fossefall**.
   With no guidelines, paste the brand's website instead: the colours and typefaces its styling
   uses most are read out for the agent, and every SVG drawing on the page is offered in the same
   gallery, the header logo first. It needs the API key; images and font files are still uploaded by hand.
+  "Convert a PNG or JPG logo" traces a flat logo picture into SVG twice, in its own colours and
+  in one colour that follows the slide, for a person to choose between (`src/lib/brand/trace.ts`).
   "Brand folder" holds the client's own files (kept in `data/sources/<brand>`, never committed).
   "Find the brand assets" starts an agent that can only list the folder, read its documents and
   look at its logos and photos; it picks the wordmark, symbol, fonts and photos (with notes) and,

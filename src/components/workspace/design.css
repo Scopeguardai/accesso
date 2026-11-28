@@ -1079,3 +1079,87 @@
   font-size: 0.8125rem;
   overflow-wrap: anywhere;
 }
+
+/* converting a picture of a logo */
+.ds .ds-convert {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.4rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line);
+}
+
+.ds .ds-convert h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.ds .ds-traced {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.ds .ds-traced-opt {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border: 1px solid var(--line-2);
+  border-radius: 0.6rem;
+  background: var(--bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ds .ds-traced-opt[aria-checked='true'] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.ds .ds-traced-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.ds .ds-traced-tiles > span {
+  display: grid;
+  place-items: center;
+  height: 4.5rem;
+  padding: 0.75rem;
+  border-radius: 0.4rem;
+  box-shadow: 0 0 0 1px rgb(28 31 29 / 0.08);
+}
+
+.ds .ds-traced-tiles svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ds .ds-traced-colours {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.9rem;
+  font-size: 0.8125rem;
+}
+
+.ds .ds-traced-colours span:not(.ds-prop-label) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ds .ds-traced-colours i {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(28 31 29 / 0.15);
+}
+
+@media (max-width: 34rem) {
+  .ds .ds-traced {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
