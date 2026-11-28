@@ -275,7 +275,7 @@ export function addImage(brandId: string, buf: Buffer, alt: string, use: string)
   if (buf.length > 10_000_000) throw new AssetError('That image is too large. Use one under 10 MB.');
   const info = imageInfo(buf);
   if (!info || !info.width || !info.height) {
-    throw new AssetError('That file is not a photo Accesso can use. Upload a JPG, PNG or WebP.');
+    throw new AssetError('That file is not a photo Voila can use. Upload a JPG, PNG or WebP.');
   }
   const description = alt.trim();
   if (!description) throw new AssetError('Say what the image shows: the agent chooses images by it.');

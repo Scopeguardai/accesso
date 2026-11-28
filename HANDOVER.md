@@ -1,4 +1,4 @@
-# Handover: where the Presentation maker stands
+# Handover: where Voila (the presentation maker) stands
 
 Written 28 November 2026 so that work can continue in a new chat. Read this first, then
 `README.md` (what the app does and how it is built) and `AGENTS.md` (Next.js 16 has
@@ -50,8 +50,11 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 ## Known limits
 
 - The top-bar logo is hard-coded to Fossefall whichever brand is open (`FossefallLogo.tsx`).
-- The product is called "Accesso" in code, which clashes with the company name. The owner
-  asked for name ideas (Deckhand, Throughline, Onbrand were suggested); none chosen yet.
+- The product is called **Voila** (renamed from "Accesso" on 28 November; spelt without the
+  accent as the owner typed it). Internal identifiers still say accesso on purpose: the repository
+  name, the `ACCESSO_*` settings, the session cookie and the package name. Renaming those would
+  break the owner's `.env.local` or sign people out. The Claude plugin keeps the name `accesso`
+  and the Drive folder `Accesso knowledge`, because those belong to the company.
 - A new brand has an empty knowledge base. Deleted brands sit in `data/trash/` (restorable from
   the front page) and are never emptied automatically.
 - Shared deck links need the team password. Offered to open `/d/<id>` links; not decided.

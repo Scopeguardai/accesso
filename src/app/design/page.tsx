@@ -7,7 +7,7 @@ import { listDecks, summarize } from '@/lib/deck/store';
 import { brandOptions } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Design system · Accesso' };
+export const metadata: Metadata = { title: 'Design system · Voila' };
 
 export default async function DesignPage({ searchParams }: { searchParams: Promise<{ brand?: string }> }) {
   const { brand } = await searchParams;

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Accesso',
+  title: 'Voila',
   description: 'Brand-true presentations, written and designed by an agent.',
 };
 

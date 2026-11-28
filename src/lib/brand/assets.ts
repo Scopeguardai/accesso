@@ -236,7 +236,7 @@ export function sanitizeSvg(input: string, label: string): string {
   const svg = out.join('');
   if (!sawRoot) throw new AssetError('That file is not an SVG logo. Upload an .svg file.');
   if (!/<(path|rect|circle|ellipse|polygon|polyline|line|use)\b/.test(svg)) {
-    throw new AssetError('That SVG has no shapes Accesso can use. Export the logo as outlined paths and try again.');
+    throw new AssetError('That SVG has no shapes Voila can use. Export the logo as outlined paths and try again.');
   }
   return svg;
 }

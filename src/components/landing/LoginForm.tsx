@@ -39,7 +39,7 @@ export default function LoginForm({ next }: { next: string }) {
         <span className="lp-logo">
           <FossefallLogo variant="full" />
         </span>
-        <h1>Sign in</h1>
+        <h1>Sign in to Voila</h1>
         <p className="lp-sub">Presentations in your clients&rsquo; brands, written and designed by an agent.</p>
         <label className="lp-field">
           <span>Team password</span>
@@ -64,7 +64,7 @@ export default function LoginForm({ next }: { next: string }) {
         <button type="submit" className="btn-ink lp-wide" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-        <p className="lp-hint">Ask whoever looks after Accesso for the password.</p>
+        <p className="lp-hint">Ask whoever looks after Voila for the password.</p>
       </form>
     </main>
   );

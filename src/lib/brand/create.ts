@@ -86,7 +86,7 @@ Say in two or three sentences what ${name} does, who it serves and what it stand
 /** Make a new brand pack with starter colours, fonts, logo placeholders and rules, ready to be filled in. */
 export function createBrand(input: NewBrand): string {
   const existing = listBrands();
-  if (existing.length >= MAX_BRANDS) throw new BrandError(`Accesso holds up to ${MAX_BRANDS} brands.`);
+  if (existing.length >= MAX_BRANDS) throw new BrandError(`Voila holds up to ${MAX_BRANDS} brands.`);
   const base = slugify(input.name, 'brand').replace(/^_+/, '') || 'brand';
   let id = base;
   for (let n = 2; existing.includes(id) || fs.existsSync(path.join(BRANDS_DIR, id)); n += 1) id = `${base.slice(0, 36)}-${n}`;

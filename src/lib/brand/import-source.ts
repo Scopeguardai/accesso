@@ -42,7 +42,7 @@ export async function pdfText(bytes: Uint8Array, label: string): Promise<SourceT
   const text = pages.map((t, i) => `--- Page ${i + 1} ---\n${t.trim()}`).join('\n\n');
   if (pages.join('').replace(/\s/g, '').length < 200) {
     throw new SourceError(
-      'That PDF has almost no text in it, so it is probably scanned images. Accesso can only read guidelines with real text.',
+      'That PDF has almost no text in it, so it is probably scanned images. Voila can only read guidelines with real text.',
     );
   }
   // Drawn shapes that could be the logo. Finding none, or failing, never stops the reading.
@@ -155,7 +155,7 @@ async function fetchPublic(input: string, maxBytes = MAX_BYTES): Promise<{ url: 
       res = await fetch(url, {
         redirect: 'manual',
         signal: AbortSignal.timeout(25_000),
-        headers: { 'user-agent': 'Accesso brand import', accept: 'application/pdf,text/html;q=0.9,*/*;q=0.5' },
+        headers: { 'user-agent': 'Voila brand import', accept: 'application/pdf,text/html;q=0.9,*/*;q=0.5' },
       });
     } catch {
       throw new SourceError('That link could not be opened. Check it, or download the PDF and upload it.');
@@ -383,7 +383,7 @@ async function siteSource(url: URL, html: string): Promise<SourceText> {
   const colours = top(styling.colours, 24);
   if (text.length < 200 && colours.length < 3) {
     throw new SourceError(
-      'That page has almost nothing Accesso can read. It may be built entirely in the browser. Upload the guidelines as a PDF, or add the details by hand.',
+      'That page has almost nothing Voila can read. It may be built entirely in the browser. Upload the guidelines as a PDF, or add the details by hand.',
     );
   }
 

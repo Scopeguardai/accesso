@@ -13,7 +13,7 @@ const find = (id: string) => (/^[a-z0-9][a-z0-9-]{0,39}$/.test(id) ? readDeck(id
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const deck = find((await params).id);
-  return { title: deck ? `${deck.title} · Accesso` : 'Accesso' };
+  return { title: deck ? `${deck.title} · Voila` : 'Voila' };
 }
 
 export default async function StudioPage({ params }: Props) {

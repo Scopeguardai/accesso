@@ -6,7 +6,7 @@ import { listKnowledge, summarizeEntry } from '@/lib/knowledge/search';
 import { brandOptions } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Knowledge base · Accesso' };
+export const metadata: Metadata = { title: 'Knowledge base · Voila' };
 
 export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ entry?: string }> }) {
   const { entry } = await searchParams;

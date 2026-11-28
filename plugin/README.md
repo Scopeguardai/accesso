@@ -24,7 +24,7 @@ Adding a client needs no change to this plugin.
 - The Google Drive connector, connected by each person who makes decks.
 - Each client's Design System shared with the people who make that client's decks.
 
-## Relation to the Accesso app
+## Relation to the Voila app
 
-`content-flow` and `deck-review` are the same files the Accesso app's agent uses. The
+`content-flow` and `deck-review` are the same files the Voila app's agent uses. The
 app's own slide format has a separate `deck-design` skill in `src/lib/agent/skills`.
