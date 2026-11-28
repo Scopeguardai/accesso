@@ -8,7 +8,7 @@ import type { Brief, Deck } from '@/lib/deck/schema';
 import type { DeckSummary } from '@/lib/deck/store';
 import type { KnowledgeSummary } from '@/lib/knowledge/format';
 import type { BrandOption } from '@/lib/workspace';
-import FossefallLogo from './FossefallLogo';
+import VoilaLogo from '@/components/VoilaLogo';
 import { ClockProvider } from './clock';
 import Composer from './Composer';
 import { copyText } from './copy';
@@ -292,7 +292,7 @@ export default function Workspace({
       <div className="ws cv" data-view={section} data-pane={section === 'knowledge' ? pane : undefined}>
         <header className="top">
           <Link href="/" className="top-home" aria-label="All brands" title="All brands">
-            {section === 'new' ? <FossefallLogo /> : <FossefallLogo variant="mark" />}
+            <VoilaLogo />
           </Link>
 
           {deck ? (

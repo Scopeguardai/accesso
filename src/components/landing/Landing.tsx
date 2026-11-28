@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRef, useState, type FormEvent } from 'react';
-import FossefallLogo from '@/components/workspace/FossefallLogo';
+import VoilaLogo from '@/components/VoilaLogo';
 import '@/components/workspace/workspace.css';
 import './landing.css';
 
@@ -164,7 +164,7 @@ export default function Landing({
     <div className="ws lp">
       <header className="lp-top">
         <span className="lp-logo">
-          <FossefallLogo variant="full" />
+          <VoilaLogo />
         </span>
         {signIn ? (
           <button type="button" className="btn-quiet" onClick={signOut}>

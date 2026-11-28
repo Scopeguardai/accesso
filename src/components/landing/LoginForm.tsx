@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import FossefallLogo from '@/components/workspace/FossefallLogo';
+import VoilaLogo from '@/components/VoilaLogo';
 import '@/components/workspace/workspace.css';
 import './landing.css';
 
@@ -37,9 +37,9 @@ export default function LoginForm({ next }: { next: string }) {
     <main className="ws lp lp-login">
       <form className="lp-login-card" onSubmit={signIn} noValidate>
         <span className="lp-logo">
-          <FossefallLogo variant="full" />
+          <VoilaLogo />
         </span>
-        <h1>Sign in to Voila</h1>
+        <h1>Sign in</h1>
         <p className="lp-sub">Presentations in your clients&rsquo; brands, written and designed by an agent.</p>
         <label className="lp-field">
           <span>Team password</span>

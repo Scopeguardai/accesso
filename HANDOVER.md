@@ -49,7 +49,8 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 
 ## Known limits
 
-- The top-bar logo is hard-coded to Fossefall whichever brand is open (`FossefallLogo.tsx`).
+- The app's own logo is a stand-in Voila wordmark set in Inter (`src/components/VoilaLogo.tsx`,
+  `public/voila-wordmark.svg`, browser icon `src/app/icon.svg`). Swap in a designed logo when there is one.
 - The product is called **Voila** (renamed from "Accesso" on 28 November; spelt without the
   accent as the owner typed it). Internal identifiers still say accesso on purpose: the repository
   name, the `ACCESSO_*` settings, the session cookie and the package name. Renaming those would

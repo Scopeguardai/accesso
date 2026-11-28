@@ -43,11 +43,7 @@
 .top-home svg {
   display: block;
   width: auto;
-  height: 1.125rem;
-}
-
-.cv:not([data-view='new']) .top-home svg {
-  height: 1.6rem;
+  height: 1.25rem;
 }
 
 .cv .top .bar-title {
