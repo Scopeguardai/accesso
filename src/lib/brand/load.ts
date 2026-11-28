@@ -1,3 +1,4 @@
+import { designChoiceSchema, resolveDesign, type Design } from './looks';
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
@@ -34,6 +35,8 @@ const brandSchema = z.object({
   assetBase: z.string(),
   fonts: z.object({ sans: fontSchema, mono: fontSchema }),
   logo: z.object({ wordmark: z.string(), mark: z.string() }),
+  /** The deck design: which look, and a few options. Left out, the brand gets the default look. */
+  design: designChoiceSchema.optional(),
   defaultPalette: z.string(),
   palettes: z.record(z.string(), paletteSchema),
   images: z.array(
@@ -46,7 +49,8 @@ const brandSchema = z.object({
     }),
   ),
 });
-export type Brand = z.infer<typeof brandSchema> & {
+export type Brand = Omit<z.infer<typeof brandSchema>, 'design'> & {
+  design: Design;
   guide: string;
   /** Inline SVG markup, so the logo can take its colour from the slide. */
   svg: { wordmark: string; mark: string };
@@ -67,6 +71,8 @@ export function loadBrand(brandId: string): Brand {
   const readSvg = (rel: string) => fs.readFileSync(path.join(publicDir, rel), 'utf8');
   const brand: Brand = {
     ...data,
+    // Fossefall's file predates the choice of designs; without one it keeps the design made for it.
+    design: resolveDesign(data.design ?? (data.id === 'fossefall' ? { look: 'nordic' } : undefined)),
     guide: fs.readFileSync(path.join(dir, 'BRAND.md'), 'utf8'),
     svg: { wordmark: readSvg(data.logo.wordmark), mark: readSvg(data.logo.mark) },
   };

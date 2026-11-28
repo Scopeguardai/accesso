@@ -291,6 +291,7 @@ function SlideView({ slide, brand, index }: { slide: Slide; brand: Brand; index:
 }
 
 export default function DeckView({ deck, brand }: { deck: Deck; brand: Brand }) {
+  const design = brand.design;
   const p = paletteFor(brand, deck.palette);
   const font = (f: Brand['fonts']['sans']) =>
     `@font-face{font-family:"${f.family}";src:url("${brand.assetBase}/${f.file}") format("${cssFontFormat(f.file)}");font-weight:${f.weight};font-display:swap}`;
@@ -312,7 +313,15 @@ export default function DeckView({ deck, brand }: { deck: Deck; brand: Brand }) 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: font(brand.fonts.sans) + font(brand.fonts.mono) }} />
-      <main className="deck" style={vars} data-status={deck.status}>
+      <main
+        className="deck"
+        style={vars}
+        data-status={deck.status}
+        data-look={design.look}
+        data-cover={design.cover}
+        data-corners={design.corners}
+        data-headings={design.headings}
+      >
         {deck.slides.map((slide, i) => (
           <SlideView key={slide.id} slide={slide} brand={brand} index={i} />
         ))}

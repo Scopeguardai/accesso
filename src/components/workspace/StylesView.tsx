@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import type { PresentationStyle } from '@/lib/knowledge/styles';
+import { LOOK_INFO, type Look } from '@/lib/brand/looks';
 import { useAutosize } from './Composer';
 
 type Draft = { id: string | null; name: string; when: string; body: string; fromExamples?: boolean };
@@ -10,7 +11,12 @@ type Study =
   | { status: 'none' }
   | { status: 'working'; from: string[] }
   | { status: 'error'; error: string }
-  | { status: 'ready'; from: string[]; draft: { name: string; when: string; body: string } };
+  | {
+      status: 'ready';
+      from: string[];
+      draft: { name: string; when: string; body: string };
+      design?: { look: Look; cover: string; corners: string; headings: string; why: string };
+    };
 
 const PIECE = 8_000_000;
 const mb = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1000))} KB`);
@@ -61,6 +67,7 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
   const [study, setStudy] = useState<Study>({ status: 'none' });
   const [exBusy, setExBusy] = useState('');
   const [exError, setExError] = useState('');
+  const [designApplied, setDesignApplied] = useState(false);
 
   // The examples already uploaded and any draft waiting; checked again while the agent works.
   useEffect(() => {
@@ -133,6 +140,19 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
     setExBusy('');
     if (!res?.ok) return setExError(data?.error ?? 'The agent could not start. Try again.');
     setStudy(data);
+  }
+
+  /** Make the design the agent matched to the examples this brand's deck design. */
+  async function applyDesign() {
+    if (study.status !== 'ready' || !study.design) return;
+    const { why: _why, ...design } = study.design;
+    const res = await fetch('/api/design/look', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ brand, design }),
+    }).catch(() => null);
+    if (res?.ok) setDesignApplied(true);
+    else setExError('The design could not be applied. Set it under Design system, Deck design.');
   }
 
   /** Forget the draft and the uploaded examples, once the style is saved or the draft is not wanted. */
@@ -354,6 +374,23 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
                   <p>
                     <b>A draft style is ready: {study.draft.name}.</b> Written from {study.from.join(', ')}.
                   </p>
+                  {study.design && (
+                    <div className="pst-design">
+                      <p>
+                        <b>The design closest to these examples: {LOOK_INFO[study.design.look].name}</b>, with a{' '}
+                        {study.design.cover === 'accent' ? 'coloured' : study.design.cover} cover, {study.design.corners}{' '}
+                        picture corners and {study.design.headings} headings. {study.design.why}
+                      </p>
+                      <div className="pst-actions">
+                        <button type="button" className="btn-quiet" disabled={designApplied} onClick={applyDesign}>
+                          {designApplied ? `${brandName} now uses this design` : `Use this design for ${brandName}`}
+                        </button>
+                        <a className="pst-link" href={`/design?brand=${encodeURIComponent(brand)}#ds-deck`}>
+                          See it under Deck design
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <div className="pst-actions">
                     <button type="button" className="btn-ink" onClick={() => start({ id: null, ...study.draft, fromExamples: true })}>
                       Review and save

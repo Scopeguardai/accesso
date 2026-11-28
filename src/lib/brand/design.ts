@@ -1,3 +1,4 @@
+import { designChoiceSchema, type Design, type DesignChoice } from './looks';
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
@@ -42,6 +43,8 @@ export type DesignData = {
   assetBase: string;
   /** What still holds starter material and needs the brand's own. */
   todo: { section: string; text: string }[];
+  /** The deck design: the look and its options, with the look's defaults filled in. */
+  design: Design;
   defaultPalette: string;
   palettes: {
     key: string;
@@ -85,6 +88,7 @@ export function designData(brandId: string): DesignData {
     website: b.website ?? '',
     assetBase: b.assetBase,
     todo,
+    design: b.design,
     defaultPalette: b.defaultPalette,
     palettes: Object.entries(b.palettes).map(([key, p]) => ({
       key,
@@ -119,6 +123,7 @@ export const designInputSchema = z.object({
     .regex(/^[^<>{}\n\r]+$/, 'Use plain text for the name.'),
   tagline: z.string().trim().max(120, 'Keep the tagline under 120 characters.'),
   website: z.string().trim().max(200, 'Keep the website under 200 characters.'),
+  design: designChoiceSchema.optional(),
   defaultPalette: z.string(),
   palettes: z
     .record(
@@ -155,6 +160,7 @@ type RawBrand = {
   tagline: string;
   website?: string;
   assetBase: string;
+  design?: DesignChoice;
   defaultPalette: string;
   palettes: Record<string, Record<string, string>>;
   fonts: Record<'sans' | 'mono', { family: string; file: string; weight: string }>;
@@ -198,6 +204,7 @@ export function saveDesign(brandId: string, input: DesignInput): DesignData {
 
   raw.name = input.name;
   raw.tagline = input.tagline;
+  if (input.design?.look) raw.design = input.design;
   if (input.website) raw.website = input.website;
   else delete raw.website;
   raw.defaultPalette = input.defaultPalette;
@@ -324,4 +331,12 @@ function writeAtomic(file: string, text: string) {
   const tmp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, text);
   fs.renameSync(tmp, file);
+}
+
+/** Set only the deck design of a brand: the look and its options. */
+export function saveLook(brandId: string, choice: DesignChoice): DesignData {
+  const { file, raw } = brandFiles(brandId);
+  if (!choice.look) throw new DesignError('Choose a design.');
+  raw.design = choice;
+  return commit(brandId, file, raw);
 }

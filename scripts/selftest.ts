@@ -10,7 +10,8 @@ import { systemPrompt } from '../src/lib/agent/prompt';
 import { passwordMatches, passwordSet, safeNext, sessionToken, validSession } from '../src/lib/auth';
 import { AssetError, fontFormat, imageInfo, sanitizeSvg } from '../src/lib/brand/assets';
 import { createBrand, newBrandSchema } from '../src/lib/brand/create';
-import { designData } from '../src/lib/brand/design';
+import { designData, saveLook } from '../src/lib/brand/design';
+import { LOOK_INFO, LOOKS, resolveDesign } from '../src/lib/brand/looks';
 import { deleteBrand, listTrash, restoreBrand, TRASH_DIR } from '../src/lib/brand/remove';
 import { addFiles, clearFiles, documentText, fontNames, fontWeight, listFiles, previewImage, readFile, SOURCES_DIR } from '../src/lib/brand/sources';
 import { cleanPath } from '../src/lib/brand/source-types';
@@ -294,6 +295,24 @@ check('presentation styles are kept apart from knowledge and reach the agent as 
     fs.rmSync(path.join(KNOWLEDGE_DIR, 'fossefall', '_styles'), { recursive: true, force: true });
   }
   assert.equal(styleGuidance('fossefall', undefined), '');
+});
+
+check('each brand has its own deck design: Fossefall keeps Nordic, a new brand starts Clean, and the choice is saved', () => {
+  assert.deepEqual(resolveDesign(undefined), { look: 'clean', ...LOOK_INFO.clean.defaults });
+  assert.deepEqual(resolveDesign({ look: 'bold', corners: 'square' }), { look: 'bold', cover: 'accent', corners: 'square', headings: 'heavy' });
+  assert.equal(loadBrand('fossefall').design.look, 'nordic');
+  const css = fs.readFileSync(path.join(ROOT, 'src', 'components', 'deck.css'), 'utf8');
+  for (const look of LOOKS.filter((l) => l !== 'nordic')) assert.ok(css.includes(`[data-look='${look}']`), `${look} has styles`);
+  const id = createBrand(newBrandSchema.parse({ name: 'Look Test' }));
+  try {
+    assert.equal(loadBrand(id).design.look, 'clean');
+    assert.deepEqual(saveLook(id, { look: 'editorial', cover: 'dark' }).design, { look: 'editorial', cover: 'dark', corners: 'square', headings: 'light' });
+    assert.equal(loadBrand(id).design.cover, 'dark');
+    assert.throws(() => saveLook(id, {}));
+  } finally {
+    fs.rmSync(path.join(ROOT, 'brands', id), { recursive: true, force: true });
+    fs.rmSync(path.join(ROOT, 'public', 'brands', id), { recursive: true, force: true });
+  }
 });
 
 check('the team password guards sign-in, and a changed password signs everyone out', () => {

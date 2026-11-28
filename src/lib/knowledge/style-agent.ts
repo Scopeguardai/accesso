@@ -4,7 +4,19 @@ import { loadBrand } from '../brand/load';
 import { LAYOUT_GUIDE, LAYOUTS } from '../deck/schema';
 import { ROOT, safeId } from '../paths';
 import { EXAMPLES_DIR, listExamples, readExample, slideImage, type ExampleDeck } from './examples';
+import { z } from 'zod';
+import { CORNERS, COVERS, HEADINGS, LOOK_INFO, LOOKS } from '../brand/looks';
 import { styleInputSchema, type StyleInput } from './styles';
+
+/** The deck design that looks most like the examples, for a person to accept or ignore. */
+export const designSuggestionSchema = z.object({
+  look: z.enum(LOOKS),
+  cover: z.enum(COVERS),
+  corners: z.enum(CORNERS),
+  headings: z.enum(HEADINGS),
+  why: z.string().trim().max(300).regex(/^[^<>\n\r]*$/),
+});
+export type DesignSuggestion = z.infer<typeof designSuggestionSchema>;
 
 /**
  * Drafting a presentation style from example presentations. The agent is given the
@@ -17,7 +29,7 @@ export type StyleDraft =
   | { status: 'none' }
   | { status: 'working'; startedAt: string; from: string[] }
   | { status: 'error'; error: string }
-  | { status: 'ready'; finishedAt: string; from: string[]; draft: StyleInput };
+  | { status: 'ready'; finishedAt: string; from: string[]; draft: StyleInput; design?: DesignSuggestion };
 
 const fileOf = (brand: string) => path.join(EXAMPLES_DIR, safeId(brand), 'draft.json');
 
@@ -39,7 +51,9 @@ export function readStyleDraft(brand: string): StyleDraft {
     if (state.status === 'working' && !drafting.has(brand)) return { status: 'error', error: 'Studying the examples was interrupted. Try again.' };
     if (state.status === 'ready') {
       const draft = styleInputSchema.safeParse(state.draft);
-      return draft.success ? { ...state, draft: draft.data } : { status: 'none' };
+      if (!draft.success) return { status: 'none' };
+      const design = designSuggestionSchema.safeParse(state.design);
+      return { ...state, draft: draft.data, design: design.success ? design.data : undefined };
     }
     return state;
   } catch {
@@ -89,6 +103,14 @@ Call propose_style once with:
   ## Always include
   ## Avoid
 
+If you looked at slides of at least one example, also give "design": the deck design of this tool that looks most like the examples. Choose from what you saw, not from the text:
+${LOOKS.map((l) => `- look "${l}": ${LOOK_INFO[l].text}`).join('\n')}
+- cover: "dark", "light" or "accent" (a strong brand colour), for the background of the cover and closing slides.
+- corners: "square", "soft" or "round", for how pictures are cornered.
+- headings: "light", "medium" or "heavy", for the weight of headline type.
+- why: one sentence on what in the examples led to the choice.
+No design matches an example exactly; pick the closest. Leave "design" out if you could not look at any slides.
+
 After the tool call succeeds, reply with one sentence.`;
 
 function describeDeck(deck: ExampleDeck, index: number, budget: number): string {
@@ -119,8 +141,8 @@ export async function runStyleDraft(brand: string): Promise<void> {
       throw new Error('Those presentations have no text that can be read. Export them as PDF and upload those.');
     }
     const sdk = await import('@anthropic-ai/claude-agent-sdk');
-    const { z } = await import('zod');
     let draft: StyleInput | null = null;
+    let design: DesignSuggestion | undefined;
     let views = 0;
     const text = (t: string, isError = false) => ({ content: [{ type: 'text' as const, text: t }], ...(isError ? { isError } : {}) });
 
@@ -146,14 +168,21 @@ export async function runStyleDraft(brand: string): Promise<void> {
             }
           },
         ),
-        sdk.tool('propose_style', 'Record the presentation style you have written. Call once.', styleInputSchema.shape, async (args) => {
-          const parsed = styleInputSchema.safeParse(args);
-          if (!parsed.success) {
-            return text(`Rejected. ${parsed.error.issues.slice(0, 6).map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`, true);
-          }
-          draft = parsed.data;
-          return text('Recorded.');
-        }),
+        sdk.tool(
+          'propose_style',
+          'Record the presentation style you have written and, if you looked at slides, the closest deck design. Call once.',
+          { ...styleInputSchema.shape, design: designSuggestionSchema.optional() },
+          async (args) => {
+            const parsed = styleInputSchema.safeParse(args);
+            if (!parsed.success) {
+              return text(`Rejected. ${parsed.error.issues.slice(0, 6).map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`, true);
+            }
+            draft = parsed.data;
+            const d = designSuggestionSchema.safeParse((args as { design?: unknown }).design);
+            design = d.success && views > 0 ? d.data : undefined;
+            return text('Recorded.');
+          },
+        ),
       ],
     });
 
@@ -178,7 +207,7 @@ export async function runStyleDraft(brand: string): Promise<void> {
       if (message.type === 'result' && message.subtype !== 'success') throw new Error(`The agent stopped early (${message.subtype}).`);
     }
     if (!draft) throw new Error('The agent could not write a style from those examples. Try again, or write the style yourself.');
-    write(brand, { status: 'ready', finishedAt: new Date().toISOString(), from, draft });
+    write(brand, { status: 'ready', finishedAt: new Date().toISOString(), from, draft, design });
   } catch (err) {
     write(brand, { status: 'error', error: (err as Error).message });
   } finally {

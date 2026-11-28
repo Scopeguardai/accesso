@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { cssFontFormat, MAX_IMAGES, MAX_PALETTES } from '@/lib/brand/assets';
 import type { ColourRole, DesignData } from '@/lib/brand/design';
 import type { ImportState } from '@/lib/brand/import';
+import { CORNERS, COVERS, HEADINGS, LOOK_INFO, LOOKS, type Design } from '@/lib/brand/looks';
 import BrandFolder from './BrandFolder';
 import { sendGuidelines } from './folder-upload';
 import { useAutosize } from './Composer';
@@ -36,6 +37,7 @@ const SECTIONS = [
   ['import', 'From guidelines'],
   ['folder', 'Brand folder'],
   ['details', 'Brand details'],
+  ['deck', 'Deck design'],
   ['logo', 'Logo'],
   ['colours', 'Colour palettes'],
   ['type', 'Typography'],
@@ -46,7 +48,7 @@ const SECTIONS = [
 
 type Draft = Pick<
   DesignData,
-  'name' | 'tagline' | 'website' | 'defaultPalette' | 'palettes' | 'images' | 'starters' | 'guide'
+  'name' | 'tagline' | 'website' | 'design' | 'defaultPalette' | 'palettes' | 'images' | 'starters' | 'guide'
 >;
 
 const isHex = (v: string) => /^#[0-9A-Fa-f]{6}$/.test(v);
@@ -67,6 +69,7 @@ function draftOf(d: DesignData): Draft {
     name: d.name,
     tagline: d.tagline,
     website: d.website,
+    design: { ...d.design },
     defaultPalette: d.defaultPalette,
     palettes: d.palettes.map((p) => ({ ...p, colours: { ...p.colours } })),
     images: d.images.map((i) => ({ ...i })),
@@ -103,6 +106,26 @@ function FileButton({
         }}
       />
     </label>
+  );
+}
+
+/** Sample slides drawn at full slide size and scaled down to fit, so they look as they will on a screen. */
+function SlidePreview({ src }: { src: string }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const fit = () => setScale(el.clientWidth / 1280);
+    fit();
+    const watch = new ResizeObserver(fit);
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
+  return (
+    <div className="ds-look-preview" ref={box}>
+      <iframe title="Sample slides in this design" src={src} style={{ transform: `scale(${scale})` }} />
+    </div>
   );
 }
 
@@ -452,6 +475,7 @@ export default function DesignView({
           name: draft.name,
           tagline: draft.tagline,
           website: draft.website,
+          design: draft.design,
           defaultPalette: draft.defaultPalette,
           palettes: Object.fromEntries(draft.palettes.map((p) => [p.key, { label: p.label, colours: p.colours }])),
           images: draft.images.map(({ id, alt, use }) => ({ id, alt, use })),
@@ -806,6 +830,62 @@ export default function DesignView({
               />
             </label>
           </div>
+        </section>
+
+        <section id="ds-deck" className="ds-sec">
+          <h2>Deck design</h2>
+          <p className="ds-lede">
+            How this brand&rsquo;s slides are designed: where the logo sits, how headings are set, how pictures are
+            shaped and how the cover is composed. Colours, fonts and logo come from the sections below. The preview
+            shows sample slides in the design you pick; it applies to every presentation for this brand once you save.
+          </p>
+          <div className="ds-looks" role="radiogroup" aria-label="Design">
+            {LOOKS.map((look) => (
+              <button
+                key={look}
+                type="button"
+                role="radio"
+                aria-checked={draft.design.look === look}
+                className="ds-look"
+                onClick={() => update((d) => ({ ...d, design: { look, ...LOOK_INFO[look].defaults } }))}
+              >
+                <b>{LOOK_INFO[look].name}</b>
+                <span>{LOOK_INFO[look].text}</span>
+              </button>
+            ))}
+          </div>
+          <div className="ds-look-opts">
+            {(
+              [
+                ['cover', 'Cover and closing', COVERS, { dark: 'Dark', light: 'Light', accent: 'Accent colour' }],
+                ['corners', 'Picture corners', CORNERS, { square: 'Square', soft: 'Soft', round: 'Round' }],
+                ['headings', 'Headings', HEADINGS, { light: 'Light', medium: 'Medium', heavy: 'Heavy' }],
+              ] as const
+            ).map(([key, label, values, names]) => (
+              <div key={key} className="ds-look-opt">
+                <span id={`ds-opt-${key}`}>{label}</span>
+                <div className="seg" role="group" aria-labelledby={`ds-opt-${key}`}>
+                  {values.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      aria-pressed={draft.design[key] === v}
+                      onClick={() => update((d) => ({ ...d, design: { ...d.design, [key]: v } as Design }))}
+                    >
+                      {(names as Record<string, string>)[v]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <SlidePreview
+            src={`/design/preview?brand=${encodeURIComponent(saved.id)}&look=${draft.design.look}&cover=${draft.design.cover}&corners=${draft.design.corners}&headings=${draft.design.headings}&palette=${encodeURIComponent(saved.palettes.some((p) => p.key === draft.defaultPalette) ? draft.defaultPalette : saved.defaultPalette)}&v=${assetVersion}`}
+          />
+          <p className="ds-note">
+            Scroll inside the preview to see each kind of slide. It uses the brand&rsquo;s saved colours, fonts and logo.
+            {draft.design.cover !== 'dark' && ' A logo in its own colours shows best on a light cover.'}
+          </p>
         </section>
 
         <section id="ds-logo" className="ds-sec">

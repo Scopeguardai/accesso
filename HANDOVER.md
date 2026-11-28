@@ -37,6 +37,7 @@ breaking changes: read `node_modules/next/dist/docs/` before writing Next code).
 | Presentation styles | Knowledge base tab; `src/lib/knowledge/styles.ts`, `StylesView.tsx`; the brief carries `style`; guidance is added to the agent's system prompt in `run.ts` |
 | PNG/JPG logo converter | Logo section of the design system; `src/lib/brand/trace.ts` (sharp + potrace); returns a colour SVG and a one-colour SVG, nothing saved until chosen |
 | Style from example presentations | Styles tab; `src/lib/knowledge/examples.ts` (PDF pages rendered with unpdf + @napi-rs/canvas, .pptx read with fflate), `style-agent.ts`; uploads go in 8 MB pieces. Not yet run with a real key |
+| Deck designs | Five looks chosen per brand (`src/lib/brand/looks.ts`, end of `deck.css`, Deck design section with live preview at `/design/preview`); the example-study agent suggests one. New looks are added as `[data-look]` rules; the slide markup is shared |
 
 Key files added in this stretch: `src/lib/brand/{assets,design,create,import,import-source,pdf-graphics}.ts`,
 `src/app/api/{brands,design,login}/`, `src/components/workspace/DesignView.tsx` + `design.css`,
@@ -66,6 +67,12 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 - Shared deck links need the team password. Offered to open `/d/<id>` links; not decided.
 - A logo with its own colours keeps them on every slide, dark ones included; offered but not built: colour on light backgrounds and one colour on dark, automatically. Logos found in PDFs come out in one colour. Typed (not outlined) wordmarks in a PDF are not found.
 - Decks are JSON files on one machine; agent runs live in the web process.
+
+## Dev server and stale data
+
+After a change to how brands are loaded, the running dev server once served old brand data to
+pages until it was restarted. `dev:sync` restarts the app only when `package.json` or the lock
+file change, so bump the version in `package.json` when a change needs a restart.
 
 ## Upload size in the codespace
 

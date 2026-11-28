@@ -42,6 +42,14 @@ First brand: **Fossefall**.
   `data/examples/<brand>` until the style is saved): an agent reads every slide, looks at PDF
   slides as pictures, and writes the structure, layouts (in terms of this app's thirteen), tone and
   imagery, without copying facts from the examples. A person reviews the draft before saving.
+- **Deck designs.** Five looks (Clean, Editorial, Bold, Corporate, Nordic), each a complete design
+  for all thirteen layouts: where the logo and page number sit, how type is set, how pictures are
+  shaped, how the cover and closing are composed. A brand picks one under Design system, Deck
+  design, with options for the cover background, picture corners and heading weight, and sees
+  sample slides before saving. Fossefall uses Nordic (the original design); a brand that has not
+  chosen gets Clean. The looks live at the end of `src/components/deck.css`; the choice is
+  `design` in `brand.json` (`src/lib/brand/looks.ts`). The agent that studies example
+  presentations also suggests the closest look.
 - **Design system.** The brand the agent designs with: logo, colour palettes, fonts, images,
   brand rules and example briefs. Colours and text are edited on the page and saved together;
   logo, font and image files are uploaded or removed one at a time. Uploaded logos are
