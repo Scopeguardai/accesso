@@ -4,7 +4,16 @@ import { useEffect, useState, type FormEvent } from 'react';
 import type { PresentationStyle } from '@/lib/knowledge/styles';
 import { useAutosize } from './Composer';
 
-type Draft = { id: string | null; name: string; when: string; body: string };
+type Draft = { id: string | null; name: string; when: string; body: string; fromExamples?: boolean };
+type Example = { file: string; name: string; kind: 'pdf' | 'pptx'; size: number };
+type Study =
+  | { status: 'none' }
+  | { status: 'working'; from: string[] }
+  | { status: 'error'; error: string }
+  | { status: 'ready'; from: string[]; draft: { name: string; when: string; body: string } };
+
+const PIECE = 8_000_000;
+const mb = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1000))} KB`);
 
 /** Headings to write under, so a new style covers what the agent needs. Prompts only: no invented content. */
 const OUTLINE = `## What these presentations are for
@@ -47,6 +56,93 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
   const [notice, setNotice] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const bodyRef = useAutosize(draft?.body ?? '');
+  const exApi = `/api/knowledge/styles/examples?brand=${encodeURIComponent(brand)}`;
+  const [examples, setExamples] = useState<Example[]>([]);
+  const [study, setStudy] = useState<Study>({ status: 'none' });
+  const [exBusy, setExBusy] = useState('');
+  const [exError, setExError] = useState('');
+
+  // The examples already uploaded and any draft waiting; checked again while the agent works.
+  useEffect(() => {
+    let live = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      const res = await fetch(exApi, { cache: 'no-store' }).catch(() => null);
+      if (!live || !res?.ok) return;
+      const data = await res.json();
+      setExamples(data.examples);
+      setStudy(data.draft);
+      if (data.draft.status === 'working') timer = setTimeout(check, 3000);
+    };
+    void check();
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+    // Runs on opening and again each time a study starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exApi, study.status === 'working']);
+
+  async function addExamples(list: FileList | null) {
+    if (!list?.length) return;
+    setExError('');
+    try {
+      for (const file of Array.from(list)) {
+        if (!/\.(pdf|pptx)$/i.test(file.name)) throw new Error(`${file.name}: upload presentations as PDF or PowerPoint (.pptx) files.`);
+        if (file.size > 65_000_000) throw new Error(`${file.name} is too large (over 65 MB). Export a smaller PDF.`);
+        const count = Math.max(1, Math.ceil(file.size / PIECE));
+        const id = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join('');
+        for (let i = 0; i < count; i += 1) {
+          setExBusy(`Uploading ${file.name}${count > 1 ? ` (${Math.round(((i + 1) / count) * 100)}%)` : ''}…`);
+          const form = new FormData();
+          form.set('brand', brand);
+          form.set('upload', id);
+          form.set('index', String(i));
+          form.set('count', String(count));
+          form.set('name', file.name);
+          form.set('piece', file.slice(i * PIECE, (i + 1) * PIECE), 'piece');
+          const res = await fetch('/api/knowledge/styles/examples/upload', { method: 'POST', body: form });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error(data?.error ?? (res.status === 413 ? `${file.name} was too large to send.` : `${file.name} could not be uploaded. Try again.`));
+          if (data.examples) setExamples(data.examples);
+        }
+      }
+    } catch (err) {
+      setExError((err as Error).message);
+    } finally {
+      setExBusy('');
+    }
+  }
+
+  async function removeExample(file: string) {
+    const res = await fetch(`${exApi}&file=${encodeURIComponent(file)}`, { method: 'DELETE' }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    if (res?.ok) setExamples(data.examples);
+    else setExError(data?.error ?? 'That example could not be removed.');
+  }
+
+  async function startStudy() {
+    setExError('');
+    setExBusy('Starting…');
+    const res = await fetch('/api/knowledge/styles/examples/draft', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ brand }),
+    }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    setExBusy('');
+    if (!res?.ok) return setExError(data?.error ?? 'The agent could not start. Try again.');
+    setStudy(data);
+  }
+
+  /** Forget the draft and the uploaded examples, once the style is saved or the draft is not wanted. */
+  async function finishStudy() {
+    const res = await fetch(`${exApi}&all=1`, { method: 'DELETE' }).catch(() => null);
+    if (res?.ok) {
+      setExamples([]);
+      setStudy({ status: 'none' });
+    }
+  }
 
   useEffect(() => {
     let live = true;
@@ -84,6 +180,7 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
       if (!res.ok) throw new Error(data.error ?? 'The style could not be saved. Try again.');
       setStyles(data.styles);
       setNotice(`${data.style.name} was saved. The agent can use it for new presentations.`);
+      if (draft.fromExamples) void finishStudy();
       setDraft(null);
     } catch (err) {
       setError((err as Error).message);
@@ -163,8 +260,11 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
               />
             </label>
             <p className="pst-hint">
-              Write under the headings, or replace them. Describe how these presentations are built, not what a
-              particular one says: facts belong in the knowledge base.{' '}
+              {draft.fromExamples
+                ? 'The agent wrote this from your examples. Check it reads true, change what is wrong, then save. '
+                : 'Write under the headings, or replace them. '}
+              Describe how these presentations are built, not what a particular one says: facts belong in the knowledge
+              base.{' '}
               <label className="pst-file">
                 Fill in from a .md or .txt file
                 <input
@@ -239,6 +339,88 @@ export default function StylesView({ brand, brandName }: { brand: string; brandN
                 Add a style
               </button>
             </div>
+
+            <section className="pst-examples" aria-labelledby="pst-ex">
+              <h2 id="pst-ex">Create a style from example presentations</h2>
+              <p className="pst-lede">
+                Upload up to five presentations {brandName} has made before, as PDF or PowerPoint. The agent studies how
+                they are built (the order of sections, the layouts, how much is on a slide, the tone) and drafts a style
+                for you to check and save. It describes how they are built, not what they say. PDFs give the best
+                result, because the agent can look at the slides as well as read them.
+              </p>
+
+              {study.status === 'ready' ? (
+                <div className="pst-ready">
+                  <p>
+                    <b>A draft style is ready: {study.draft.name}.</b> Written from {study.from.join(', ')}.
+                  </p>
+                  <div className="pst-actions">
+                    <button type="button" className="btn-ink" onClick={() => start({ id: null, ...study.draft, fromExamples: true })}>
+                      Review and save
+                    </button>
+                    <button type="button" className="btn-quiet" onClick={finishStudy}>
+                      Discard the draft
+                    </button>
+                  </div>
+                </div>
+              ) : study.status === 'working' ? (
+                <p className="pst-working" role="status">
+                  <span className="dot" data-status="generating" aria-hidden="true" />
+                  The agent is studying {study.from.join(', ')}. This takes a few minutes; you can leave this page.
+                </p>
+              ) : (
+                <>
+                  {examples.length > 0 && (
+                    <ul className="pst-files">
+                      {examples.map((e) => (
+                        <li key={e.file}>
+                          <span>
+                            {e.name} <span className="pst-hint">{mb(e.size)}</span>
+                          </span>
+                          <button type="button" className="pst-remove" onClick={() => removeExample(e.file)} aria-label={`Remove ${e.name}`}>
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="pst-actions">
+                    <label className={`btn-quiet pst-pick${exBusy ? ' is-disabled' : ''}`}>
+                      {examples.length ? 'Add another presentation' : 'Upload presentations'}
+                      <input
+                        type="file"
+                        multiple
+                        disabled={!!exBusy}
+                        accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                        onChange={(e) => {
+                          void addExamples(e.target.files);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {examples.length > 0 && (
+                      <button type="button" className="btn-ink" disabled={!!exBusy} onClick={startStudy}>
+                        Study {examples.length === 1 ? 'it' : 'them'} and draft a style
+                      </button>
+                    )}
+                    {exBusy && (
+                      <span className="pst-hint" role="status">
+                        {exBusy}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+              {(exError || study.status === 'error') && (
+                <p className="pst-error" role="alert">
+                  {exError || (study.status === 'error' ? study.error : '')}
+                </p>
+              )}
+              <p className="pst-hint">
+                Use examples of one kind at a time, such as three investor pitches, so the style is about that kind. The
+                files are removed once the style is saved.
+              </p>
+            </section>
           </>
         )}
       </div>

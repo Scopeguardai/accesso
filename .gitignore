@@ -21,6 +21,7 @@ brands/*/folder.json
 # Clients' brand folders: their own files, never committed
 data/sources/
 data/uploads-tmp/
+data/examples/
 
 # Deleted brands, kept so they can be restored
 data/trash/

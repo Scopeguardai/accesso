@@ -38,6 +38,10 @@ First brand: **Fossefall**.
   `knowledge/<brand>/_styles`. A Style picker on the new-presentation form passes the chosen one to
   the agent; left open, the agent is given them all and picks the one that fits the brief. Styles
   are guidance: knowledge search does not return them and the agent never cites them.
+  A style can also be drafted from up to five example presentations (PDF or .pptx, kept in
+  `data/examples/<brand>` until the style is saved): an agent reads every slide, looks at PDF
+  slides as pictures, and writes the structure, layouts (in terms of this app's thirteen), tone and
+  imagery, without copying facts from the examples. A person reviews the draft before saving.
 - **Design system.** The brand the agent designs with: logo, colour palettes, fonts, images,
   brand rules and example briefs. Colours and text are edited on the page and saved together;
   logo, font and image files are uploaded or removed one at a time. Uploaded logos are

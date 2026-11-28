@@ -3,6 +3,7 @@ import path from 'node:path';
 import { isRunning } from '../agent/run';
 import { listDecks } from '../deck/store';
 import { BRANDS_DIR, DECKS_DIR, KNOWLEDGE_DIR, ROOT, safeId } from '../paths';
+import { EXAMPLES_DIR } from '../knowledge/examples';
 import { isSearching } from './folder-agent';
 import { isImporting } from './import';
 import { SOURCES_DIR } from './sources';
@@ -89,6 +90,7 @@ export function deleteBrand(brandId: string): TrashItem {
       [path.join(KNOWLEDGE_DIR, id), path.join(into, 'knowledge')],
       [path.join(PUBLIC_BRANDS, id), path.join(into, 'public')],
       [path.join(SOURCES_DIR, id), path.join(into, 'sources')],
+      [path.join(EXAMPLES_DIR, id), path.join(into, 'examples')],
       [path.join(BRANDS_DIR, id), path.join(into, 'brand')],
     ]);
   } catch (err) {
@@ -144,6 +146,7 @@ export function restoreBrand(trashId: string): string {
     [path.join(from, 'public'), path.join(PUBLIC_BRANDS, id)],
     [path.join(from, 'knowledge'), path.join(KNOWLEDGE_DIR, id)],
     [path.join(from, 'sources'), path.join(SOURCES_DIR, id)],
+    [path.join(from, 'examples'), path.join(EXAMPLES_DIR, id)],
     ...decks.map((d): [string, string] => [path.join(from, 'decks', `${d}.json`), path.join(DECKS_DIR, `${d}.json`)]),
   ]);
   fs.rmSync(from, { recursive: true, force: true });

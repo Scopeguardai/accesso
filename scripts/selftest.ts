@@ -15,6 +15,7 @@ import { deleteBrand, listTrash, restoreBrand, TRASH_DIR } from '../src/lib/bran
 import { addFiles, clearFiles, documentText, fontNames, fontWeight, listFiles, previewImage, readFile, SOURCES_DIR } from '../src/lib/brand/sources';
 import { cleanPath } from '../src/lib/brand/source-types';
 import { traceLogo } from '../src/lib/brand/trace';
+import { clearExamples, listExamples, readExample, saveExample, slideImage } from '../src/lib/knowledge/examples';
 import { proposalSchema, readImport } from '../src/lib/brand/import';
 import { pdfGraphics } from '../src/lib/brand/pdf-graphics';
 import { checkPublicUrl, cssColours, htmlToText, pdfText, siteFromHtml, SourceError } from '../src/lib/brand/import-source';
@@ -443,6 +444,47 @@ void (async () => {
     await assert.rejects(traceLogo(Buffer.from('not a picture')), /not a PNG/);
     passed += 1;
     console.log('ok  a PNG or JPG logo is traced into SVG in its own colours and in one colour');
+  }
+
+  // Example presentations: PowerPoint slides are read with their layout names, PDF slides can be pictured.
+  {
+    const { zipSync, strToU8 } = await import('fflate');
+    const slide = (t: string) => `<p:sld><p:cSld><p:spTree><p:sp><p:txBody><a:p><a:r><a:t>${t}</a:t></a:r></a:p></p:txBody></p:sp><p:pic/></p:spTree></p:cSld></p:sld>`;
+    const pptx = Buffer.from(
+      zipSync({
+        'ppt/slides/slide1.xml': strToU8(slide('Welcome')),
+        'ppt/slides/slide2.xml': strToU8(slide('Our platform &amp; plan')),
+        'ppt/slides/slide10.xml': strToU8(slide('Thank you')),
+        'ppt/slides/_rels/slide1.xml.rels': strToU8('<Relationships><Relationship Target="../slideLayouts/slideLayout1.xml"/></Relationships>'),
+        'ppt/slideLayouts/slideLayout1.xml': strToU8('<p:sldLayout><p:cSld name="Title Slide"></p:cSld></p:sldLayout>'),
+      }),
+    );
+    const draw = '0 0 0 rg 100 100 m 300 100 l 200 300 l h f';
+    const pdf = Buffer.from(
+      `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 800 450]/Contents 4 0 R/Resources<<>>>>endobj\n4 0 obj<</Length ${draw.length}>>stream\n${draw}\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%EOF`,
+    );
+    const id = 'fossefall';
+    try {
+      const a = saveExample(id, 'Pitch deck (2026).pptx', pptx);
+      const b = saveExample(id, '../../evil.pdf', pdf);
+      assert.ok(/^\d+-Pitch deck \(2026\)\.pptx$/.test(a.file) && !b.file.includes('/') && !b.file.includes('..'));
+      assert.throws(() => saveExample(id, 'old.ppt', pptx), /Export it as a PDF/);
+      assert.throws(() => saveExample(id, 'fake.pdf', Buffer.from('hello')), /not a real PDF/);
+      const deck = await readExample(id, a);
+      assert.deepEqual(deck.slides.map((x) => x.text), ['Welcome', 'Our platform & plan', 'Thank you']);
+      assert.equal(deck.slides[0].layout, 'Title Slide');
+      assert.equal(deck.slides[0].pictures, 1);
+      assert.equal(deck.canView, false);
+      const page = await readExample(id, b);
+      assert.equal(page.slides.length, 1);
+      assert.equal((await slideImage(id, b, 1)).subarray(0, 2).toString('hex'), 'ffd8');
+      assert.equal(listExamples(id).length, 2);
+    } finally {
+      clearExamples(id);
+      fs.rmSync(path.join(ROOT, 'data', 'examples', id), { recursive: true, force: true });
+    }
+    passed += 1;
+    console.log('ok  example presentations are read slide by slide, and PDF slides can be looked at');
   }
   console.log(`\n${passed} checks passed`);
 })().catch((err) => {

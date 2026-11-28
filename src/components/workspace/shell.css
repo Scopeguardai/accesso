@@ -607,3 +607,69 @@
   text-overflow: ellipsis;
   cursor: pointer;
 }
+
+.pst .pst-examples {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.pst .pst-examples h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.pst .pst-files {
+  display: grid;
+}
+
+.pst .pst-files li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.pst .pst-pick {
+  position: relative;
+  cursor: pointer;
+}
+
+.pst .pst-pick input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pst .pst-pick.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.pst .pst-pick:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.pst .pst-ready {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+}
+
+.pst .pst-working {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}

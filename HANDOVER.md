@@ -36,6 +36,7 @@ breaking changes: read `node_modules/next/dist/docs/` before writing Next code).
 | Delete brand | From its card; moves to `data/trash/`, restorable from Recently deleted |
 | Presentation styles | Knowledge base tab; `src/lib/knowledge/styles.ts`, `StylesView.tsx`; the brief carries `style`; guidance is added to the agent's system prompt in `run.ts` |
 | PNG/JPG logo converter | Logo section of the design system; `src/lib/brand/trace.ts` (sharp + potrace); returns a colour SVG and a one-colour SVG, nothing saved until chosen |
+| Style from example presentations | Styles tab; `src/lib/knowledge/examples.ts` (PDF pages rendered with unpdf + @napi-rs/canvas, .pptx read with fflate), `style-agent.ts`; uploads go in 8 MB pieces. Not yet run with a real key |
 
 Key files added in this stretch: `src/lib/brand/{assets,design,create,import,import-source,pdf-graphics}.ts`,
 `src/app/api/{brands,design,login}/`, `src/components/workspace/DesignView.tsx` + `design.css`,
