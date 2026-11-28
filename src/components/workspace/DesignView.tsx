@@ -6,6 +6,7 @@ import { cssFontFormat, MAX_IMAGES, MAX_PALETTES } from '@/lib/brand/assets';
 import type { ColourRole, DesignData } from '@/lib/brand/design';
 import type { ImportState } from '@/lib/brand/import';
 import BrandFolder from './BrandFolder';
+import { sendGuidelines } from './folder-upload';
 import { useAutosize } from './Composer';
 import './design.css';
 
@@ -194,14 +195,7 @@ export default function DesignView({
     setImpApplied(false);
     setImpPick(0);
     try {
-      const form = new FormData();
-      form.set('brand', saved.id);
-      if (fields.file) form.set('file', fields.file);
-      if (fields.url) form.set('url', fields.url);
-      const res = await fetch('/api/design/import', { method: 'POST', body: form });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'The guidelines could not be read. Try again.');
-      setImp(data);
+      setImp(await sendGuidelines(saved.id, fields));
       setImpUrl('');
     } catch (err) {
       setImpError((err as Error).message);
@@ -338,7 +332,9 @@ export default function DesignView({
       for (const [k, v] of Object.entries(fields)) form.set(k, v);
       const res = await fetch('/api/design/asset', { method: 'POST', body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'The upload did not work. Try again.');
+      if (!res.ok) {
+        throw new Error(data.error ?? (res.status === 413 ? 'That file is too large to send. Use one under 10 MB.' : 'The upload did not work. Try again.'));
+      }
       syncAssets(data);
       setNotice({ where, text: done, tone: 'ok' });
       return true;

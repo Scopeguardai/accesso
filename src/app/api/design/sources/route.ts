@@ -1,49 +1,14 @@
 import { NextResponse } from 'next/server';
-import { imageInfo, sanitizeSvg } from '@/lib/brand/assets';
-import { clearFolderSearch, isSearching, readFolderSearch } from '@/lib/brand/folder-agent';
+import { clearFolderSearch, isSearching } from '@/lib/brand/folder-agent';
+import { folderView } from '@/lib/brand/folder-view';
 import { listBrands } from '@/lib/brand/load';
-import { addFiles, clearFiles, fontNames, fontWeight, listFiles, readFile, removeFile, SourceFileError } from '@/lib/brand/sources';
+import { addFiles, clearFiles, removeFile, SourceFileError } from '@/lib/brand/sources';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const noBrand = () => NextResponse.json({ error: 'That brand no longer exists.' }, { status: 404 });
-
-export type FolderFile = {
-  path: string;
-  kind: 'logo' | 'font' | 'image' | 'document';
-  size: number;
-  svg?: string;
-  family?: string;
-  style?: string;
-  weight?: string;
-  width?: number;
-  height?: number;
-};
-
-/** What is in a brand's folder, with what is needed to show and use each file, and the agent's picks. */
-function folderView(brand: string) {
-  const files: FolderFile[] = listFiles(brand).map((f) => {
-    const out: FolderFile = { ...f };
-    try {
-      if (f.kind === 'logo' && f.size < 300_000) out.svg = sanitizeSvg(readFile(brand, f.path).toString('utf8'), 'Logo');
-      if (f.kind === 'font') {
-        const buf = readFile(brand, f.path);
-        const n = fontNames(buf);
-        Object.assign(out, { family: n.family, style: n.style, weight: fontWeight(buf, n.style ?? f.path) });
-      }
-      if (f.kind === 'image') {
-        const info = imageInfo(readFile(brand, f.path));
-        if (info) Object.assign(out, { width: info.width, height: info.height });
-      }
-    } catch {
-      /* shown without details */
-    }
-    return out;
-  });
-  return { files, search: readFolderSearch(brand) };
-}
 
 export async function GET(request: Request) {
   const brand = new URL(request.url).searchParams.get('brand') ?? '';

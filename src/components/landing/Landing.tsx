@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRef, useState, type FormEvent } from 'react';
 import VoilaLogo from '@/components/VoilaLogo';
-import { uploadToFolder } from '@/components/workspace/folder-upload';
+import { sendGuidelines, uploadToFolder } from '@/components/workspace/folder-upload';
 import '@/components/workspace/workspace.css';
 import './landing.css';
 
@@ -118,15 +118,11 @@ export default function Landing({
         return;
       }
       if (way !== 'hand') {
-        const form = new FormData();
-        form.set('brand', id);
-        if (way === 'guidelines' && file) form.set('file', file);
-        else form.set('url', way === 'website' ? site.trim() : link.trim());
-        const res = await fetch('/api/design/import', { method: 'POST', body: form });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
+        try {
+          await sendGuidelines(id, way === 'guidelines' && file ? { file } : { url: way === 'website' ? site.trim() : link.trim() });
+        } catch (err) {
           setMadeId(id);
-          throw new Error(data.error ?? 'That could not be read. Try again.');
+          throw err;
         }
       }
       window.location.assign(`/design?brand=${encodeURIComponent(id)}`);

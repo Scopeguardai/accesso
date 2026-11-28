@@ -3,6 +3,7 @@ import { beginImport, clearImport, isImporting, readImport, runImport } from '@/
 import { isSearching } from '@/lib/brand/folder-agent';
 import { pdfText, SourceError, urlText } from '@/lib/brand/import-source';
 import { listBrands } from '@/lib/brand/load';
+import { readFile, SourceFileError } from '@/lib/brand/sources';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,11 +28,15 @@ export async function POST(request: Request) {
   }
   const file = form.get('file');
   const url = String(form.get('url') ?? '').trim();
+  // A PDF too large to send in one request is sent to the brand folder first, in pieces.
+  const folderFile = String(form.get('folderFile') ?? '').trim();
   try {
     const source =
       file instanceof File && file.size > 0
         ? await pdfText(new Uint8Array(await file.arrayBuffer()), file.name.slice(0, 120))
-        : url
+        : folderFile
+          ? await pdfText(new Uint8Array(readFile(brand, folderFile)), folderFile.split('/').pop()!.slice(0, 120))
+          : url
           ? await urlText(url)
           : null;
     if (!source) return NextResponse.json({ error: 'Upload a PDF or paste a link first.' }, { status: 400 });
@@ -41,7 +46,7 @@ export async function POST(request: Request) {
     after(() => runImport(brand, source));
     return NextResponse.json(readImport(brand), { status: 202 });
   } catch (err) {
-    if (err instanceof SourceError) return NextResponse.json({ error: err.message }, { status: 400 });
+    if (err instanceof SourceError || err instanceof SourceFileError) return NextResponse.json({ error: err.message }, { status: 400 });
     throw err;
   }
 }

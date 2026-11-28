@@ -64,6 +64,13 @@ Key files added in this stretch: `src/lib/brand/{assets,design,create,import,imp
 - Logos are one colour and SVG only. Typed (not outlined) wordmarks in a PDF are not found.
 - Decks are JSON files on one machine; agent runs live in the web process.
 
+## Upload size in the codespace
+
+GitHub's connection to the codespace refuses any request over about 16 MB (measured: 16.7 MB
+passes, 17 MB gets a 413 page). Brand-folder uploads go in batches of up to 12 MB, and larger
+files in 8 MB pieces through `/api/design/sources/chunk`. A guidelines PDF over 12 MB goes to the
+brand folder in pieces and is read from there (`folderFile`). Keep any new upload under that limit.
+
 ## Brand folder: next steps
 
 - Google Drive and SharePoint/OneDrive as places the agent can search. Everything that reads the
