@@ -135,9 +135,9 @@ and a Google Drive folder at `Accesso knowledge / <Client name>` (the facts). Se
 
 ## Before anyone else uses this
 
-- **There is no sign-in.** Anyone who can reach the app can create and edit decks, and
-  anyone with a deck's link can read it. Run it locally, or behind your own access
-  control, until accounts are added.
+- **Sign-in is one shared password.** Set `ACCESSO_PASSWORD`, or anyone who can reach the
+  app can create and edit decks. There are no personal accounts and no record of who did
+  what. Run it locally, or behind your own access control, until accounts are added.
 - **Decks are files on one machine.** Move `src/lib/deck/store.ts` to a database before
   hosting.
 - **Agent runs live in the web server's process.** A restart interrupts a run in
